@@ -22,7 +22,7 @@ export default function CameraRig() {
     if (!activeSlug) {
       target = home
     } else if (focus && focus.slug === activeSlug) {
-      target = getCameraTarget(focus.position, focus.orbit)
+      target = getCameraTarget(focus.position, focus.orbit, { narrow })
     } else {
       return undefined // the planet has not reported its frozen position yet
     }

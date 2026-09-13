@@ -104,9 +104,23 @@ const RENDERERS = {
 export default function Page({ page }) {
   useDocumentTitle(`${person.name} — ${page.label}`)
 
+  if (page.sections.length === 0) {
+    return (
+      <article className="entry entry--placeholder">
+        <p className="entry__planet">Planet</p>
+        <h1 className="entry__title">{page.planetName}</h1>
+        <p className="entry__status">in development...</p>
+        <p className="entry__note">
+          Nothing here yet. Scroll, swipe, or use the menu to visit another planet.
+        </p>
+      </article>
+    )
+  }
+
   return (
     <article className="entry">
       <header className="entry__header">
+        <p className="entry__planet">{page.planetName}</p>
         <h1 className="entry__title">{page.label}</h1>
         {page.blurb && <p className="entry__blurb">{page.blurb}</p>}
       </header>

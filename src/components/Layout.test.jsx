@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
 import { useSceneStore } from '../store/useSceneStore.js'
@@ -15,6 +15,7 @@ function renderLayout(path = '/') {
         <Route element={<Layout />}>
           <Route index element={<p>home content</p>} />
           <Route path="about" element={<p>about content</p>} />
+          <Route path="*" element={<p>other content</p>} />
         </Route>
       </Routes>
     </MemoryRouter>,
@@ -56,6 +57,34 @@ describe('Layout', () => {
     const pane = document.getElementById('overlay-content')
     expect(pane).not.toBeNull()
     await waitFor(() => expect(pane.style.opacity).not.toBe('0'))
+  })
+
+  it('lists every contact link and the texture credit in the footer', () => {
+    useSceneStore.setState({ renderTier: 'static' })
+    renderLayout()
+    expect(screen.getByRole('link', { name: 'fujita.natsuo@gmail.com' })).toHaveAttribute(
+      'href',
+      'mailto:fujita.natsuo@gmail.com',
+    )
+    expect(screen.getByRole('link', { name: 'natsuo001@e.ntu.edu.sg' })).toHaveAttribute(
+      'href',
+      'mailto:natsuo001@e.ntu.edu.sg',
+    )
+    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute(
+      'href',
+      'https://www.linkedin.com/in/natsuo-fujita',
+    )
+    expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Solar System Scope/ })).toBeInTheDocument()
+  })
+
+  it('steps to the first planet on a wheel once booted', () => {
+    useSceneStore.setState({ renderTier: 'static' })
+    renderLayout()
+    expect(screen.getByText('home content')).toBeInTheDocument()
+    // The wheel lands on the scene layer, outside the content card.
+    fireEvent.wheel(document.querySelector('.scene-layer'), { deltaY: 120 })
+    expect(useSceneStore.getState().activeSlug).toBe('mercury')
   })
 
   it('mirrors the URL into activeSlug', () => {

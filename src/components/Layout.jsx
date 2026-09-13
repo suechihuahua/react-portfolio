@@ -1,14 +1,18 @@
 import { lazy, Suspense, useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
-import { pages, person } from '../content/site.js'
+import { pages, person, textureCredit } from '../content/site.js'
 import { useSceneStore, watchMediaPreferences } from '../store/useSceneStore.js'
+import { useScrollNavigation } from '../hooks/useScrollNavigation.js'
 import HUD from './HUD.jsx'
 import BootSequence from './BootSequence.jsx'
 import StaticHero from './StaticHero.jsx'
 import SceneErrorBoundary from './SceneErrorBoundary.jsx'
 
 const Scene = lazy(() => import('./three/Scene.jsx'))
+
+// Sun first, then every planet in solar order.
+const SCROLL_ROUTES = ['/', ...pages.map((page) => `/${page.slug}`)]
 
 // Mounts once and persists across every route change, so the canvas never
 // remounts on navigation -- only `activeSlug` changes.
@@ -38,6 +42,8 @@ export default function Layout() {
   useEffect(() => {
     if ((isStatic || captureMode) && !booted) setBooted(true)
   }, [isStatic, captureMode, booted, setBooted])
+
+  useScrollNavigation(SCROLL_ROUTES, booted && !captureMode)
 
   return (
     <div className="experience">
@@ -83,8 +89,15 @@ export default function Layout() {
           <footer className="colophon">
             <span>{person.name}</span>
             <a href={`mailto:${person.email}`}>{person.email}</a>
+            <a href={`mailto:${person.ntuEmail}`}>{person.ntuEmail}</a>
+            <a href={person.linkedin} target="_blank" rel="noreferrer">
+              LinkedIn
+            </a>
             <a href={person.github} target="_blank" rel="noreferrer">
               GitHub
+            </a>
+            <a className="colophon__credit" href={textureCredit.href} target="_blank" rel="noreferrer">
+              {textureCredit.label}
             </a>
           </footer>
         </>

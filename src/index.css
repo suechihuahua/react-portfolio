@@ -144,7 +144,7 @@ a {
   z-index: 10;
   padding: 0.9rem var(--gutter) 0.6rem;
   background: linear-gradient(to bottom, rgba(6, 4, 12, 0.88), rgba(6, 4, 12, 0));
-  font-family: var(--mono);
+  font-family: var(--text);
 }
 
 .hud__row {
@@ -164,12 +164,13 @@ a {
 }
 
 .hud__brand-name {
-  font-size: 0.95rem;
-  letter-spacing: 0.02em;
+  font-family: var(--display);
+  font-size: 1.05rem;
+  letter-spacing: 0.01em;
 }
 
 .hud__breadcrumb {
-  font-size: 0.72rem;
+  font-size: 0.78rem;
   color: var(--accent);
 }
 
@@ -180,13 +181,15 @@ a {
 }
 
 .hud__button {
-  font-family: var(--mono);
-  font-size: 0.72rem;
+  font-family: var(--text);
+  font-size: 0.82rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--ink-soft);
   background: rgba(10, 8, 20, 0.6);
   border: 1px solid var(--line);
-  border-radius: 3px;
-  padding: 0.38rem 0.65rem;
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
   cursor: pointer;
   text-decoration: none;
   transition: color 0.15s ease, border-color 0.15s ease;
@@ -205,9 +208,10 @@ a {
 
 .hud__nav {
   display: flex;
-  gap: 1.25rem;
+  gap: 1.1rem;
   margin-top: 0.6rem;
-  font-size: 0.8rem;
+  font-size: 0.86rem;
+  font-weight: 500;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -290,12 +294,17 @@ a {
 
 .colophon a {
   color: var(--ink-soft);
-  font-family: var(--mono);
   text-decoration: none;
 }
 
 .colophon a:hover {
   color: var(--accent);
+}
+
+.colophon__credit {
+  margin-left: auto;
+  font-size: 0.66rem;
+  opacity: 0.8;
 }
 
 /* ─── Boot screen (real console, no glow) ──────────────────────────────────── */
@@ -395,11 +404,12 @@ a {
 
 .button {
   display: inline-block;
-  font-family: var(--mono);
-  font-size: 0.85rem;
-  padding: 0.6rem 1.1rem;
+  font-family: var(--text);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 0.6rem 1.15rem;
   border: 1px solid var(--line);
-  border-radius: 4px;
+  border-radius: 999px;
   color: var(--ink);
   text-decoration: none;
   transition: border-color 0.15s ease, background 0.15s ease, color 0.15s ease;
@@ -502,9 +512,36 @@ a {
   font-size: 0.9rem;
 }
 
-.entry__blurb::before {
-  content: '// ';
+.entry__planet {
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   color: var(--accent);
+  margin-bottom: 0.6rem;
+}
+
+.entry--placeholder {
+  text-align: center;
+  padding: clamp(1rem, 4vw, 2rem) 0;
+}
+
+.entry--placeholder .entry__planet {
+  margin-bottom: 0.4rem;
+}
+
+.entry__status {
+  margin-top: 0.75rem;
+  font-family: var(--mono);
+  font-size: 1rem;
+  color: var(--ink-soft);
+}
+
+.entry__note {
+  margin-top: 1.25rem;
+  color: var(--ink-soft);
+  max-width: 34ch;
+  margin-inline: auto;
 }
 
 .section {
@@ -652,10 +689,6 @@ a {
   font-size: 0.85rem;
 }
 
-.projects__link::before {
-  content: '> ';
-}
-
 /* ─── In-scene planet labels (decorative, aria-hidden) ─────────────────────── */
 
 .planet-label {
@@ -663,22 +696,23 @@ a {
   flex-direction: column;
   align-items: center;
   gap: 0.1rem;
-  font-family: var(--mono);
+  font-family: var(--text);
   text-align: center;
   text-decoration: none;
   color: var(--ink);
   white-space: nowrap;
   user-select: none;
-  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.9);
 }
 
 .planet-label__title {
-  font-size: 0.9rem;
-  letter-spacing: 0.03em;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 
-.planet-label__blurb {
-  font-size: 0.7rem;
+.planet-label__caption {
+  font-size: 0.66rem;
   color: var(--ink-soft);
   transition: opacity 0.2s ease;
 }
@@ -714,18 +748,23 @@ a {
 
   .overlay-pane {
     align-items: flex-end;
-    /* Bottom padding clears the fixed .colophon so the sheet ends above it. */
-    padding: 6rem 1rem 2.75rem;
+    /* Bottom padding clears the two-line fixed .colophon so the sheet ends above it. */
+    padding: 6rem 1rem 3.6rem;
   }
 
   .overlay-pane__inner {
-    max-height: 72svh;
-    padding-bottom: 3rem;
+    max-height: 70svh;
+    padding-bottom: 2rem;
   }
 
   .colophon {
     justify-content: center;
+    gap: 0.2rem 1rem;
     font-size: 0.66rem;
+  }
+
+  .colophon__credit {
+    display: none;
   }
 
   .contents__leader {

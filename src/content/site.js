@@ -1,12 +1,12 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Site content lives here. To add a new page + nav button, add one object to
-// `pages` below. It automatically gets:
-//   • a button in the header nav
-//   • an entry in the home-page contents list
+// Site content lives here. Every entry in `pages` is one planet, in solar
+// order. A page with `sections` renders them in the content card; a page with
+// no sections shows the "in development" placeholder. Each page gets:
+//   • a link in the HUD nav (by planet name)
+//   • a planet in the 3D scene (textured by `planet`)
 //   • its own route at /<slug>
 //
-// Each page has `sections`. A section's `kind` decides how it renders
-// (see src/components/Page.jsx):
+// Section `kind`s (see src/components/Page.jsx):
 //   • "prose"    – one or more paragraphs (default)
 //   • "list"     – grouped bullet lists, e.g. skills
 //   • "courses"  – a term-by-term course table
@@ -18,13 +18,24 @@ export const person = {
   tagline:
     'Computer science student. I like understanding how systems work — and how they break.',
   email: 'fujita.natsuo@gmail.com',
+  ntuEmail: 'natsuo001@e.ntu.edu.sg',
   github: 'https://github.com/suechihuahua',
+  linkedin: 'https://www.linkedin.com/in/natsuo-fujita',
   resume: '/resume.pdf',
 }
 
+export const textureCredit = {
+  label: 'Planet textures: Solar System Scope (CC BY 4.0)',
+  href: 'https://www.solarsystemscope.com/textures/',
+}
+
 export const pages = [
+  { slug: 'mercury', planet: 'mercury', planetName: 'Mercury', label: 'Mercury', sections: [] },
+  { slug: 'venus', planet: 'venus', planetName: 'Venus', label: 'Venus', sections: [] },
   {
     slug: 'about',
+    planet: 'earth',
+    planetName: 'Earth',
     label: 'About me',
     blurb: 'who I am',
     sections: [
@@ -52,14 +63,14 @@ export const pages = [
   },
   {
     slug: 'courses',
+    planet: 'mars',
+    planetName: 'Mars',
     label: 'Courses taken',
     blurb: 'what I’ve studied',
     sections: [
       {
         kind: 'prose',
-        paragraphs: [
-          'Coursework so far, grouped by term. This fills in as I go.',
-        ],
+        paragraphs: ['Coursework so far, grouped by term. This fills in as I go.'],
       },
       {
         kind: 'courses',
@@ -86,6 +97,8 @@ export const pages = [
   },
   {
     slug: 'projects',
+    planet: 'jupiter',
+    planetName: 'Jupiter',
     label: 'Projects',
     blurb: 'what I’ve built',
     sections: [
@@ -108,6 +121,9 @@ export const pages = [
       },
     ],
   },
+  { slug: 'saturn', planet: 'saturn', planetName: 'Saturn', label: 'Saturn', sections: [] },
+  { slug: 'uranus', planet: 'uranus', planetName: 'Uranus', label: 'Uranus', sections: [] },
+  { slug: 'neptune', planet: 'neptune', planetName: 'Neptune', label: 'Neptune', sections: [] },
 ]
 
 export const pageBySlug = Object.fromEntries(pages.map((p) => [p.slug, p]))

@@ -7,7 +7,7 @@ export default function Home() {
 
   return (
     <section className="home">
-      <p className="home__kicker">// portfolio</p>
+      <p className="home__kicker">Portfolio</p>
       <h1 className="home__name">{person.name}</h1>
       <p className="home__tagline">{person.tagline}</p>
 
@@ -21,17 +21,19 @@ export default function Home() {
       </div>
 
       <nav className="contents" aria-label="Contents">
-        <p className="contents__title">Sectors</p>
+        <p className="contents__title">Explore</p>
         <ul className="contents__list">
-          {pages.map((page, i) => (
-            <li className="contents__item" key={page.slug} style={{ '--i': i }}>
-              <Link to={page.slug} className="contents__link">
-                <span className="contents__label">{page.label}</span>
-                <span className="contents__leader" aria-hidden="true" />
-                <span className="contents__blurb">{page.blurb}</span>
-              </Link>
-            </li>
-          ))}
+          {pages
+            .filter((page) => page.sections.length > 0)
+            .map((page, i) => (
+              <li className="contents__item" key={page.slug} style={{ '--i': i }}>
+                <Link to={page.slug} className="contents__link">
+                  <span className="contents__label">{page.label}</span>
+                  <span className="contents__leader" aria-hidden="true" />
+                  <span className="contents__blurb">{page.planetName}</span>
+                </Link>
+              </li>
+            ))}
         </ul>
       </nav>
     </section>
