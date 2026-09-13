@@ -56,7 +56,7 @@ export default function CameraRig() {
     const ramp = Math.min(idle.current / 2, 1)
     camera.position.x = home.position[0] + Math.sin(idle.current * 0.12) * 0.6 * ramp
     camera.position.y = home.position[1] + Math.cos(idle.current * 0.09) * 0.25 * ramp
-    camera.lookAt(0, 0, 0)
+    camera.lookAt(home.lookAt[0], home.lookAt[1], home.lookAt[2])
   })
 
   return null

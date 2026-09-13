@@ -38,8 +38,14 @@ export function getCameraTarget(planetPosition, orbit) {
 
 export function getHomeCamera({ narrow = false } = {}, total = 3) {
   const far = BASE_ORBIT + Math.max(total - 1, 0) * ORBIT_GAP
+  if (narrow) {
+    // Bottom-sheet layout: the system stays centred above the sheet.
+    return { position: [0, far * 0.75, far * 2.3], lookAt: [0, 0, 0] }
+  }
+  // Desktop: the console pane is pinned to the left, so swing the camera left
+  // and aim right of the sun to push the whole system into the free half.
   return {
-    position: [0, far * 0.75, far * (narrow ? 2.3 : 1.55)],
-    lookAt: [0, 0, 0],
+    position: [far * 0.9, far * 0.75, far * 1.9],
+    lookAt: [-far * 0.95, 0, 0],
   }
 }
