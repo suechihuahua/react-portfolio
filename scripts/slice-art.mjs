@@ -39,7 +39,38 @@ const POSES = {
   education: { x: 520, y: 446, w: 262, h: 490 },
   work: { x: 788, y: 446, w: 226, h: 490 },
   skills: { x: 1086, y: 446, w: 148, h: 490 },
-  hobbies: { x: 1248, y: 446, w: 274, h: 490 },
+  // hobbies: the drawn bed, frame and floor are keyed out by colour so he
+  // sits on the room's bed; greys are only keyed right of his leg.
+  hobbies: {
+    x: 1248,
+    y: 446,
+    w: 274,
+    h: 490,
+    // Zones are in OUTPUT pixel coordinates of the trimmed pose file.
+    bedFurniture: {
+      protect: [
+        { x: 190, y: 0, w: 290, h: 330 }, // head and torso
+        { x: 295, y: 1060, w: 130, h: 180 }, // left sock
+        { x: 525, y: 1040, w: 180, h: 150 }, // right sock
+      ],
+      greyZones: [
+        { x: 600, y: 420, w: 206, h: 610 }, // frame past his right arm and leg
+        { x: 530, y: 430, w: 175, h: 160 }, // bed between the forearm and thigh
+      ],
+      foldZones: [
+        { x: 0, y: 430, w: 95, h: 560 }, // blanket left of him
+        { x: 95, y: 700, w: 65, h: 290 }, // blanket shadow up to the outer thigh
+        { x: 400, y: 715, w: 150, h: 270 }, // gap between the legs
+      ],
+      clearZones: [
+        { x: 0, y: 430, w: 95, h: 859 }, // strip left of him
+        { x: 0, y: 940, w: 190, h: 349 }, // frame base left of the shin
+        { x: 190, y: 1000, w: 35, h: 100 }, // frame base up to the shin
+        { x: 705, y: 430, w: 101, h: 859 }, // strip right of him
+      ],
+      floorZones: [{ x: 0, y: 1000, w: 806, h: 289 }], // floor under the feet
+    },
+  },
 }
 
 const toDataUrl = (file) => `data:image/png;base64,${readFileSync(file).toString('base64')}`
@@ -57,7 +88,7 @@ try {
   await page.evaluate(
     ({ big, original, keying }) => {
       const fns = new Function(
-        `${keying}; return { keyOutCheckerboard, keyOutEnclosedCheckers, defringe, removeSpecks, clearWhereMaskClear, opaqueBounds }`,
+        `${keying}; return { keyOutCheckerboard, keyOutEnclosedCheckers, defringe, removeSpecks, clearWhereMaskClear, keyOutBedFurniture, opaqueBounds }`,
       )()
       Object.assign(window, fns)
       const load = (src) =>
@@ -128,8 +159,13 @@ try {
         const tctx = trimmed.getContext('2d')
         tctx.imageSmoothingQuality = 'high'
         tctx.drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, trimmed.width, trimmed.height)
-        // Furniture erasure comes last, in output coordinates, so despeckling
+        // Furniture removal comes last, in output coordinates, so despeckling
         // and trimming still see the whole figure.
+        if (r.bedFurniture) {
+          const out = tctx.getImageData(0, 0, trimmed.width, trimmed.height)
+          window.keyOutBedFurniture(out.data, trimmed.width, trimmed.height, r.bedFurniture)
+          tctx.putImageData(out, 0, 0)
+        }
         for (const e of r.erase ?? []) tctx.clearRect(e.x, e.y, e.w, e.h)
         return { width: trimmed.width, height: trimmed.height, png: trimmed.toDataURL('image/png') }
       },

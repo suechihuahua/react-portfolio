@@ -120,6 +120,71 @@ export function defringe(data, width, height) {
   return data
 }
 
+function hsl(r, g, b) {
+  const max = Math.max(r, g, b) / 255
+  const min = Math.min(r, g, b) / 255
+  const l = (max + min) / 2
+  const d = max - min
+  if (d === 0) return { h: 0, s: 0, l }
+  const s = d / (1 - Math.abs(2 * l - 1))
+  let h
+  if (max === r / 255) h = ((g - b) / 255 / d) % 6
+  else if (max === g / 255) h = (b - r) / 255 / d + 2
+  else h = (r - g) / 255 / d + 4
+  h *= 60
+  if (h < 0) h += 360
+  return { h, s, l }
+}
+
+const inAny = (x, y, rects = []) =>
+  rects.some((r) => x >= r.x && x < r.x + r.w && y >= r.y && y < r.y + r.h)
+
+// Removes drawn furniture around a seated figure by colour, with zones
+// (all arrays of rectangles in the image's own pixel coordinates):
+//   protect    – nothing but floor wood is keyed here (head, torso, socks)
+//   blue       – the bed's blues, keyed everywhere outside `protect`
+//   greyZones  – neutral greys go too (the frame past his leg)
+//   foldZones  – dull blue-greys and greys go (blanket folds around the legs)
+//   clearZones – everything but light pixels goes (near-black frame base)
+//   floorZones – any orange-brown goes, even inside `protect` (under the feet)
+export function keyOutBedFurniture(
+  data,
+  width,
+  height,
+  { protect = [], greyZones = [], foldZones = [], clearZones = [], floorZones = [] } = {},
+) {
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4
+      if (data[i + 3] === 0) continue
+      const { h, s, l } = hsl(data[i], data[i + 1], data[i + 2])
+      // Floor wood is orange and saturated; socks and clothes never are, so
+      // this rule may run even inside protected areas.
+      const onFloor = inAny(x, y, floorZones)
+      const wood = h >= 8 && h <= 45 && s >= 0.18
+      // Floor shadow that fell on the light socks (protected, on the floor).
+      const sockShadow = l <= 0.3 && inAny(x, y, protect)
+      if (onFloor && (wood || sockShadow)) {
+        data[i + 3] = 0
+        continue
+      }
+      if (inAny(x, y, protect)) continue
+      const blue = h >= 190 && h <= 262 && s >= 0.17 && l >= 0.08
+      const neutral = s <= 0.13 && l >= 0.2 && !(h >= 60 && h <= 160)
+      const beige = h >= 10 && h <= 45 && s <= 0.45 && l >= 0.55
+      const dullBlue = h >= 180 && h <= 275 && s >= 0.07 && l >= 0.08
+      const grey = (neutral || beige || dullBlue) && inAny(x, y, greyZones)
+      // Fold zones sit in gaps with no body in them, so anything that is not
+      // light (skin, socks) is furniture shadow; clear zones hold no body at
+      // all and lose every pixel.
+      const fold = (l <= 0.62 || neutral) && inAny(x, y, foldZones)
+      const clear = inAny(x, y, clearZones)
+      if (blue || grey || fold || clear) data[i + 3] = 0
+    }
+  }
+  return data
+}
+
 // Applies a lower-resolution alpha mask to a `factor`x larger image: light
 // checker-toned pixels whose source pixel (or any of its 8 neighbours) was
 // cleared in the mask are cleared here too. Lets pocket detection run on the
