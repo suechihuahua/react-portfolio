@@ -105,7 +105,7 @@ Removed from the baseline: `HubCore`, `TerminalPanel`, `ProjectGraph`, `CourseSt
 - Palette: `--bg #06040c`, `--haze #1b1035`, `--ink #e6e9f2`, `--ink-soft #8f93a8`, `--accent #4df1ff` (cyan), `--sun #ffb347` (amber, used for focus rings and the active state).
 - HUD: thin one-pixel console lines, monospace readouts, breadcrumb format `sector // about me`. Buttons: `resume`, `simple view`. Sound toggle removed.
 - Overlay pane: dark glass (`backdrop-filter`), one-pixel cyan border, no green glow.
-- Boot screen: same typed-text feel, restyled in the new palette; shows a subtle progress hint while the scene chunk loads.
+- Boot screen: two typed lines only — `> Fujita Natsuo's portfolio` then `> press any key to continue_` — no tagline or "user:" readout. Typed in a real terminal typeface: IBM Plex Mono (Google Fonts, replaces JetBrains Mono site-wide as `--mono`) over a native stack (`ui-monospace, "SF Mono", Menlo, Consolas, monospace`), plain phosphor-white text with a faint amber caret and no glow, so it reads as an actual console rather than a neon effect. Shows a subtle `loading scene…` hint on the skip button while the scene chunk loads.
 
 ## 4. Render tiers
 
