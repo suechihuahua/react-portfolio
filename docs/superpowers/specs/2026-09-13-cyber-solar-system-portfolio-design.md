@@ -54,7 +54,7 @@ src/
       systemLayout.js          orbit radii / angles / camera targets (pure)
 public/
   favicon.svg, favicon-32.png, apple-touch-icon.png, site.webmanifest
-  og.png (1200x630), hero-poster.webp (static tier backdrop)
+  og.png (1200x630), hero-poster.jpg (static tier backdrop)
   resume.pdf (placeholder)
 vercel.json
 ```
@@ -118,7 +118,7 @@ full    otherwise
 ```
 
 - Evaluated once at store creation; `simpleView` toggle re-evaluates. Media queries (`prefers-reduced-motion`, viewport) are still watched live.
-- `static`: `Layout` renders `<StaticHero>` (a `public/hero-poster.webp` backdrop with `object-fit: cover`) instead of the canvas. HUD and pane are identical. Boot sequence is skipped.
+- `static`: `Layout` renders `<StaticHero>` (a `public/hero-poster.jpg` backdrop with `object-fit: cover`) instead of the canvas. HUD and pane are identical. Boot sequence is skipped.
 - `lite`: canvas without post-processing, shadows, nebula, scan shell; reduced counts and dpr.
 - `SceneErrorBoundary` catches a render/WebGL error and sets the tier to `static` for the session.
 - The poster is captured once from the full-tier scene via a dev-only `?capture` query that hides the HUD and calls `canvas.toDataURL()`; the resulting file is committed. It is regenerated manually if the scene changes materially.
