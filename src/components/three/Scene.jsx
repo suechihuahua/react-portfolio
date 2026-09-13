@@ -1,47 +1,82 @@
-import { Suspense } from 'react'
-import { Canvas } from '@react-three/fiber'
-import { EffectComposer, Bloom, Vignette } from '@react-three/postprocessing'
+import { Suspense, useRef } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { ACESFilmicToneMapping } from 'three'
+import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei'
+import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing'
+import { pages } from '../../content/site.js'
 import { useSceneStore } from '../../store/useSceneStore.js'
-import { HOME_CAMERA } from './hubLayout.js'
-import GridFloor from './GridFloor.jsx'
-import ParticleField from './ParticleField.jsx'
-import Hub from './Hub.jsx'
+import { getHomeCamera } from './systemLayout.js'
+import Starfield from './Starfield.jsx'
+import GridHorizon from './GridHorizon.jsx'
+import Nebula from './Nebula.jsx'
+import Sun from './Sun.jsx'
+import OrbitSystem from './OrbitSystem.jsx'
 import CameraRig from './CameraRig.jsx'
 
+function ReadySignal() {
+  const setSceneReady = useSceneStore((s) => s.setSceneReady)
+  const done = useRef(false)
+  useFrame(() => {
+    if (done.current) return
+    done.current = true
+    setSceneReady(true)
+  })
+  return null
+}
+
 export default function Scene() {
-  const prefersReducedMotion = useSceneStore((s) => s.prefersReducedMotion)
-  const isNarrowViewport = useSceneStore((s) => s.isNarrowViewport)
-  const lightWeight = isNarrowViewport || prefersReducedMotion
+  const renderTier = useSceneStore((s) => s.renderTier)
+  const narrow = useSceneStore((s) => s.isNarrowViewport)
+  const effectsEnabled = useSceneStore((s) => s.effectsEnabled)
+  const setEffectsEnabled = useSceneStore((s) => s.setEffectsEnabled)
+  const full = renderTier === 'full'
+  const home = getHomeCamera({ narrow }, pages.length)
 
   return (
     <Canvas
-      dpr={[1, lightWeight ? 1.25 : 2]}
-      gl={{ antialias: true, powerPreference: 'high-performance', alpha: false }}
-      camera={{ position: HOME_CAMERA.position, fov: 50, near: 0.1, far: 60 }}
+      dpr={full ? [1, 2] : [1, 1.25]}
+      shadows={full ? 'soft' : false}
+      gl={{
+        antialias: false,
+        powerPreference: 'high-performance',
+        toneMapping: ACESFilmicToneMapping,
+        toneMappingExposure: 1.1,
+      }}
+      camera={{ position: home.position, fov: 45, near: 0.1, far: 120 }}
     >
-      <color attach="background" args={['#05070a']} />
-      <fog attach="fog" args={['#05070a', 14, 34]} />
-      <ambientLight intensity={0.4} color="#4df1ff" />
-      <pointLight position={[0, 4, 3]} intensity={1.1} color="#39ff88" />
-      <pointLight position={[0, 2, -6]} intensity={0.6} color="#4df1ff" />
+      <color attach="background" args={['#06040c']} />
+      <fog attach="fog" args={['#06040c', 30, 80]} />
+      <ambientLight intensity={0.12} color="#8ab4ff" />
+
+      <Environment resolution={64} frames={1}>
+        <Lightformer intensity={1.2} color="#9fd8ff" position={[0, 8, -4]} scale={[12, 4, 1]} />
+        <Lightformer intensity={2} color="#ffb347" form="ring" position={[0, 0.5, 0]} scale={3} />
+      </Environment>
 
       <Suspense fallback={null}>
-        <GridFloor />
-        <ParticleField count={lightWeight ? 350 : 1400} />
-        <Hub />
+        <Starfield full={full} />
+        <GridHorizon />
+        {full && <Nebula />}
+        <Sun full={full} />
+        <OrbitSystem full={full} />
       </Suspense>
 
       <CameraRig />
+      <ReadySignal />
 
-      {!lightWeight && (
+      {full && (
+        <PerformanceMonitor
+          flipflops={3}
+          onDecline={() => setEffectsEnabled(false)}
+          onFallback={() => setEffectsEnabled(false)}
+        />
+      )}
+
+      {full && effectsEnabled && (
         <EffectComposer multisampling={0}>
-          <Bloom
-            intensity={0.55}
-            luminanceThreshold={0.18}
-            luminanceSmoothing={0.4}
-            mipmapBlur
-          />
-          <Vignette eskil={false} offset={0.25} darkness={0.85} />
+          <Bloom intensity={0.9} luminanceThreshold={0.6} luminanceSmoothing={0.25} mipmapBlur />
+          <Vignette eskil={false} offset={0.2} darkness={0.8} />
+          <SMAA />
         </EffectComposer>
       )}
     </Canvas>

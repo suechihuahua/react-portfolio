@@ -3,67 +3,59 @@ import { useFrame, useThree } from '@react-three/fiber'
 import gsap from 'gsap'
 import { pages } from '../../content/site.js'
 import { useSceneStore } from '../../store/useSceneStore.js'
-import { getPanelCameraTarget, HOME_CAMERA } from './hubLayout.js'
+import { getCameraTarget, getHomeCamera } from './systemLayout.js'
 
-const slugs = pages.map((p) => p.slug)
+const FLY_DURATION = 1.4
 
-// Flies the camera to the panel matching the current route, and gives it a
-// gentle idle drift while parked at the hub. Position tweens run through gsap
-// (time-based, so they're already frame-rate independent); the idle drift
-// uses delta time directly for the same reason.
 export default function CameraRig() {
   const { camera } = useThree()
   const activeSlug = useSceneStore((s) => s.activeSlug)
-  const prefersReducedMotion = useSceneStore((s) => s.prefersReducedMotion)
-  const lookAt = useRef({ ...pointToVec(HOME_CAMERA.lookAt) })
-  const elapsed = useRef(0)
-  const tweensRef = useRef([])
+  const focus = useSceneStore((s) => s.focus)
+  const narrow = useSceneStore((s) => s.isNarrowViewport)
+  const setFlyProgress = useSceneStore((s) => s.setFlyProgress)
+  const lookAt = useRef({ x: 0, y: 0, z: 0 })
+  const idle = useRef(0)
 
   useEffect(() => {
-    const target = activeSlug ? getPanelCameraTarget(activeSlug, slugs) : HOME_CAMERA
-    const duration = prefersReducedMotion ? 0 : 1.5
-
-    tweensRef.current.forEach((t) => t.kill())
-    tweensRef.current = []
-
-    const posTween = gsap.to(camera.position, {
-      x: target.position[0],
-      y: target.position[1],
-      z: target.position[2],
-      duration,
-      ease: 'power3.inOut',
-    })
-
-    const lookTween = gsap.to(lookAt.current, {
-      x: target.lookAt[0],
-      y: target.lookAt[1],
-      z: target.lookAt[2],
-      duration,
-      ease: 'power3.inOut',
-      onUpdate: () => {
-        camera.lookAt(lookAt.current.x, lookAt.current.y, lookAt.current.z)
-      },
-    })
-
-    tweensRef.current = [posTween, lookTween]
-
-    return () => {
-      posTween.kill()
-      lookTween.kill()
+    let target
+    if (!activeSlug) {
+      target = getHomeCamera({ narrow }, pages.length)
+    } else if (focus && focus.slug === activeSlug) {
+      target = getCameraTarget(focus.position, focus.orbit)
+    } else {
+      return undefined // the planet has not reported its frozen position yet
     }
-  }, [activeSlug, prefersReducedMotion, camera])
+
+    setFlyProgress(0)
+    const progress = { t: 0 }
+    const timeline = gsap.timeline({
+      defaults: { duration: FLY_DURATION, ease: 'power3.inOut' },
+      onUpdate: () => camera.lookAt(lookAt.current.x, lookAt.current.y, lookAt.current.z),
+    })
+    timeline.to(
+      camera.position,
+      { x: target.position[0], y: target.position[1], z: target.position[2] },
+      0,
+    )
+    timeline.to(
+      lookAt.current,
+      { x: target.lookAt[0], y: target.lookAt[1], z: target.lookAt[2] },
+      0,
+    )
+    timeline.to(progress, { t: 1, ease: 'none', onUpdate: () => setFlyProgress(progress.t) }, 0)
+
+    return () => timeline.kill()
+  }, [activeSlug, focus, narrow, camera, setFlyProgress])
 
   useFrame((_, delta) => {
-    if (prefersReducedMotion || activeSlug) return
-    elapsed.current += delta
-    camera.position.x = HOME_CAMERA.position[0] + Math.sin(elapsed.current * 0.15) * 0.5
-    camera.position.y = HOME_CAMERA.position[1] + Math.cos(elapsed.current * 0.11) * 0.18
-    camera.lookAt(lookAt.current.x, lookAt.current.y, lookAt.current.z)
+    if (activeSlug) return
+    if (useSceneStore.getState().flyProgress < 1) return
+    idle.current += delta
+    const home = getHomeCamera({ narrow }, pages.length)
+    camera.position.x = home.position[0] + Math.sin(idle.current * 0.12) * 0.6
+    camera.position.y = home.position[1] + Math.cos(idle.current * 0.09) * 0.25
+    camera.lookAt(0, 0, 0)
   })
 
   return null
-}
-
-function pointToVec([x, y, z]) {
-  return { x, y, z }
 }
