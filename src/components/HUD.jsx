@@ -1,7 +1,6 @@
 import { NavLink, Link } from 'react-router-dom'
 import { pages, person } from '../content/site.js'
 import { useSceneStore } from '../store/useSceneStore.js'
-import { useAmbientHum } from '../hooks/useAmbientHum.js'
 
 // Persistent, plain-HTML heads-up display. Lives as a sibling to the canvas
 // (never inside it), so every control here is a normal, keyboard-reachable,
@@ -9,12 +8,8 @@ import { useAmbientHum } from '../hooks/useAmbientHum.js'
 // dragging the camera around, per the accessibility requirements.
 export default function HUD() {
   const activeSlug = useSceneStore((s) => s.activeSlug)
-  const muted = useSceneStore((s) => s.muted)
-  const toggleMuted = useSceneStore((s) => s.toggleMuted)
   const simpleView = useSceneStore((s) => s.simpleView)
   const setSimpleView = useSceneStore((s) => s.setSimpleView)
-
-  useAmbientHum(muted)
 
   const current = pages.find((p) => p.slug === activeSlug)
 
@@ -27,14 +22,6 @@ export default function HUD() {
         </Link>
 
         <div className="hud__controls">
-          <button
-            type="button"
-            className="hud__toggle"
-            onClick={toggleMuted}
-            aria-pressed={!muted}
-          >
-            {muted ? 'sound: off' : 'sound: on'}
-          </button>
           <button
             type="button"
             className="hud__toggle"

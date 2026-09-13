@@ -1,61 +1,75 @@
-// Shared state for the 3D experience. Kept intentionally small: which zone the
-// camera/overlay should be showing (driven by the current route), whether the
-// visitor prefers a flat/simple rendering, and a couple of HUD toggles.
 import { create } from 'zustand'
+import { detectRenderTier, readEnvironment } from '../lib/renderTier.js'
 
 const canUseDom = typeof window !== 'undefined'
+const STORAGE_KEY = 'nf:simpleView'
 
 const reducedMotionQuery = canUseDom
   ? window.matchMedia('(prefers-reduced-motion: reduce)')
   : null
 
-const narrowViewportQuery = canUseDom
-  ? window.matchMedia('(max-width: 720px)')
-  : null
+const narrowViewportQuery = canUseDom ? window.matchMedia('(max-width: 768px)') : null
 
 function readStoredSimpleView() {
-  if (!canUseDom) return null
-  const stored = window.localStorage.getItem('nf:simpleView')
-  return stored === null ? null : stored === 'true'
+  if (!canUseDom) return false
+  try {
+    return window.localStorage.getItem(STORAGE_KEY) === 'true'
+  } catch {
+    return false
+  }
 }
 
-const initialReducedMotion = reducedMotionQuery?.matches ?? false
+function computeTier(simpleView) {
+  if (!canUseDom) return 'static'
+  const forced = new URLSearchParams(window.location.search).get('tier')
+  if (forced === 'full' || forced === 'lite' || forced === 'static') return forced
+  return detectRenderTier({ ...readEnvironment(window), simpleView })
+}
 
-export const useSceneStore = create((set) => ({
-  // true once the boot sequence has finished (or been skipped)
+const initialSimpleView = readStoredSimpleView()
+
+export const useSceneStore = create((set, get) => ({
   booted: false,
-  // slug of the page the camera/overlay is focused on; null === hub/home
+  sceneReady: false,
   activeSlug: null,
-  // slug of the panel currently hovered/focused in the 3D hub
   hoveredSlug: null,
-  // ambient ui sound; starts muted so nothing autoplays without a gesture
-  muted: true,
-  prefersReducedMotion: initialReducedMotion,
+  focus: null,
+  flyProgress: 1,
+  effectsEnabled: true,
+  prefersReducedMotion: reducedMotionQuery?.matches ?? false,
   isNarrowViewport: narrowViewportQuery?.matches ?? false,
-  // explicit accessibility/perf escape hatch: renders the flat 2D layout
-  simpleView: readStoredSimpleView() ?? initialReducedMotion,
+  simpleView: initialSimpleView,
+  renderTier: computeTier(initialSimpleView),
 
   setBooted: (booted) => set({ booted }),
+  setSceneReady: (sceneReady) => set({ sceneReady }),
   setActiveSlug: (activeSlug) => set({ activeSlug }),
   setHoveredSlug: (hoveredSlug) => set({ hoveredSlug }),
-  toggleMuted: () => set((s) => ({ muted: !s.muted })),
-  setPrefersReducedMotion: (prefersReducedMotion) => set({ prefersReducedMotion }),
-  setIsNarrowViewport: (isNarrowViewport) => set({ isNarrowViewport }),
+  setFocus: (focus) => set({ focus }),
+  setFlyProgress: (flyProgress) => set({ flyProgress }),
+  setEffectsEnabled: (effectsEnabled) => set({ effectsEnabled }),
+  setPrefersReducedMotion: (prefersReducedMotion) =>
+    set({ prefersReducedMotion, renderTier: computeTier(get().simpleView) }),
+  setIsNarrowViewport: (isNarrowViewport) =>
+    set({ isNarrowViewport, renderTier: computeTier(get().simpleView) }),
   setSimpleView: (simpleView) => {
-    if (canUseDom) window.localStorage.setItem('nf:simpleView', String(simpleView))
-    set({ simpleView })
+    if (canUseDom) {
+      try {
+        window.localStorage.setItem(STORAGE_KEY, String(simpleView))
+      } catch {
+        /* storage blocked */
+      }
+    }
+    set({ simpleView, renderTier: computeTier(simpleView) })
   },
+  degradeToStatic: () => set({ renderTier: 'static' }),
 }))
 
-// Keep the store synced with live media-query changes (e.g. an OS setting
-// flipped mid-session, or the window being resized/rotated).
 export function watchMediaPreferences() {
   if (!canUseDom) return () => {}
 
-  const onMotionChange = (e) =>
-    useSceneStore.getState().setPrefersReducedMotion(e.matches)
-  const onWidthChange = (e) =>
-    useSceneStore.getState().setIsNarrowViewport(e.matches)
+  const onMotionChange = (e) => useSceneStore.getState().setPrefersReducedMotion(e.matches)
+  const onWidthChange = (e) => useSceneStore.getState().setIsNarrowViewport(e.matches)
 
   reducedMotionQuery.addEventListener('change', onMotionChange)
   narrowViewportQuery.addEventListener('change', onWidthChange)
