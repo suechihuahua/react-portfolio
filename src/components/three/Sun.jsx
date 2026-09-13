@@ -1,14 +1,15 @@
 import { useRef, useState } from 'react'
 import { extend, useFrame } from '@react-three/fiber'
-import { shaderMaterial } from '@react-three/drei'
-import { AdditiveBlending, BackSide, Color, MathUtils } from 'three'
+import { shaderMaterial, useTexture } from '@react-three/drei'
+import { AdditiveBlending, BackSide, Color, MathUtils, SRGBColorSpace } from 'three'
 import { SUN_RADIUS } from './systemLayout.js'
+import { SUN_TEXTURE } from './planets.js'
 
 // Atmosphere glow: drawn on the back faces of a larger sphere so the core
 // occludes the centre and only the halo between core edge and shell
 // silhouette remains, fading outward.
 const CoronaMaterial = shaderMaterial(
-  { uTime: 0, uColor: new Color('#ffb347'), uIntensity: 1 },
+  { uTime: 0, uColor: new Color('#ff9a3c'), uIntensity: 1 },
   /* glsl */ `
     varying vec3 vNormal;
     varying vec3 vView;
@@ -39,18 +40,19 @@ extend({ CoronaMaterial })
 export default function Sun({ full }) {
   const coreRef = useRef()
   const coronaRef = useRef()
-  const shellRef = useRef()
   const [hovered, setHovered] = useState(false)
+  const texture = useTexture(SUN_TEXTURE)
+  texture.colorSpace = SRGBColorSpace
 
   useFrame((state, delta) => {
     const t = state.clock.elapsedTime
     if (coreRef.current) {
-      coreRef.current.rotation.y += delta * 0.05
-      const pulse = 1 + Math.sin(t * 0.8) * 0.01
+      coreRef.current.rotation.y += delta * 0.04
+      const pulse = 1 + Math.sin(t * 0.8) * 0.008
       coreRef.current.scale.setScalar(pulse)
       coreRef.current.material.emissiveIntensity = MathUtils.damp(
         coreRef.current.material.emissiveIntensity,
-        hovered ? 2.6 : 2,
+        hovered ? 2.4 : 1.9,
         4,
         delta,
       )
@@ -64,19 +66,16 @@ export default function Sun({ full }) {
         delta,
       )
     }
-    if (shellRef.current) {
-      shellRef.current.rotation.y -= delta * 0.08
-      shellRef.current.rotation.x += delta * 0.03
-    }
   })
 
   return (
     <group>
+      {/* The sun is the scene's key light; a gentle falloff keeps Neptune lit. */}
       <pointLight
-        intensity={full ? 60 : 40}
-        distance={40}
-        decay={2}
-        color="#ffc27a"
+        intensity={40}
+        distance={0}
+        decay={1.4}
+        color="#fff1d6"
         castShadow={full}
         shadow-mapSize={[1024, 1024]}
       />
@@ -91,15 +90,16 @@ export default function Sun({ full }) {
       >
         <sphereGeometry args={[SUN_RADIUS, 64, 64]} />
         <meshStandardMaterial
-          color="#ff8c1a"
-          emissive="#ff9a2e"
-          emissiveIntensity={2}
+          color="#000000"
+          emissive="#ffc37a"
+          emissiveMap={texture}
+          emissiveIntensity={1.9}
           roughness={1}
           metalness={0}
         />
       </mesh>
 
-      <mesh scale={1.6}>
+      <mesh scale={1.5}>
         <sphereGeometry args={[SUN_RADIUS, 48, 48]} />
         <coronaMaterial
           ref={coronaRef}
@@ -109,13 +109,6 @@ export default function Sun({ full }) {
           blending={AdditiveBlending}
         />
       </mesh>
-
-      {full && (
-        <mesh ref={shellRef} scale={1.9}>
-          <icosahedronGeometry args={[SUN_RADIUS, 1]} />
-          <meshBasicMaterial color="#4df1ff" wireframe transparent opacity={0.12} />
-        </mesh>
-      )}
     </group>
   )
 }

@@ -1,15 +1,14 @@
 import { Suspense, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { ACESFilmicToneMapping } from 'three'
-import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei'
+import { PerformanceMonitor } from '@react-three/drei'
 import { EffectComposer, Bloom, Vignette, SMAA, ToneMapping } from '@react-three/postprocessing'
 import { ToneMappingMode } from 'postprocessing'
 import { pages } from '../../content/site.js'
 import { useSceneStore } from '../../store/useSceneStore.js'
 import { getHomeCamera } from './systemLayout.js'
 import Starfield from './Starfield.jsx'
-import GridHorizon from './GridHorizon.jsx'
-import Nebula from './Nebula.jsx'
+import SkySphere from './SkySphere.jsx'
 import Sun from './Sun.jsx'
 import OrbitSystem from './OrbitSystem.jsx'
 import CameraRig from './CameraRig.jsx'
@@ -44,24 +43,17 @@ export default function Scene() {
         antialias: false,
         powerPreference: 'high-performance',
         toneMapping: ACESFilmicToneMapping,
-        toneMappingExposure: 1.1,
+        toneMappingExposure: 1.05,
       }}
-      camera={{ position: home.position, fov: 45, near: 0.1, far: 120 }}
+      camera={{ position: home.position, fov: 45, near: 0.1, far: 200 }}
     >
-      <color attach="background" args={['#06040c']} />
-      <fog attach="fog" args={['#06040c', 30, 80]} />
-      <ambientLight intensity={0.35} color="#8ab4ff" />
-      <directionalLight position={[-6, 8, 12]} intensity={0.6} color="#cfe6ff" />
-
-      <Environment resolution={64} frames={1}>
-        <Lightformer intensity={1.2} color="#9fd8ff" position={[0, 8, -4]} scale={[12, 4, 1]} />
-        <Lightformer intensity={2} color="#ffb347" form="ring" position={[0, 0.5, 0]} scale={3} />
-      </Environment>
+      <color attach="background" args={['#04030a']} />
+      {/* Faint fill so night sides keep their silhouette against the sky. */}
+      <ambientLight intensity={0.16} color="#9fb2ff" />
 
       <Suspense fallback={null}>
+        <SkySphere />
         <Starfield full={full} />
-        <GridHorizon />
-        {full && <Nebula />}
         <Sun full={full} />
         <OrbitSystem full={full} />
       </Suspense>
@@ -84,8 +76,8 @@ export default function Scene() {
       {full && effectsEnabled && (
         <EffectComposer multisampling={0}>
           <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
-          <Bloom intensity={0.9} luminanceThreshold={0.6} luminanceSmoothing={0.25} mipmapBlur />
-          <Vignette eskil={false} offset={0.2} darkness={0.8} />
+          <Bloom intensity={0.7} luminanceThreshold={0.75} luminanceSmoothing={0.2} mipmapBlur />
+          <Vignette eskil={false} offset={0.2} darkness={0.7} />
           <SMAA />
         </EffectComposer>
       )}

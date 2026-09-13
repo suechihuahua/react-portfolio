@@ -1,39 +1,79 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useFrame } from '@react-three/fiber'
-import { Html } from '@react-three/drei'
+import { Html, useTexture } from '@react-three/drei'
+import { DoubleSide, RingGeometry, SRGBColorSpace } from 'three'
 import { useSceneStore } from '../../store/useSceneStore.js'
 import { orbitPosition } from './systemLayout.js'
+import { MOON_TEXTURE, SATURN_RING_TEXTURE } from './planets.js'
 
-function PlanetMaterial({ kind, full }) {
-  if (kind === 'ice') {
-    return full ? (
-      <meshPhysicalMaterial
-        color="#bfe9ff"
-        transmission={0.85}
-        thickness={0.6}
-        roughness={0.12}
-        ior={1.4}
-        clearcoat={1}
-        envMapIntensity={1.2}
-      />
-    ) : (
-      <meshPhysicalMaterial color="#9fd6f5" roughness={0.1} clearcoat={1} envMapIntensity={1.2} />
-    )
-  }
-  if (kind === 'metal') {
-    return <meshStandardMaterial color="#9aa4b8" metalness={1} roughness={0.35} envMapIntensity={1.4} />
-  }
+function useSrgbTexture(url) {
+  const texture = useTexture(url)
+  texture.colorSpace = SRGBColorSpace
+  return texture
+}
+
+// RingGeometry maps UVs planarly, but the ring texture is a radial strip, so
+// rewrite `u` as the normalised radius.
+function useRingGeometry(inner, outer) {
+  const geometry = useMemo(() => {
+    const ring = new RingGeometry(inner, outer, 128, 1)
+    const position = ring.attributes.position
+    const uv = ring.attributes.uv
+    for (let i = 0; i < position.count; i += 1) {
+      const r = Math.hypot(position.getX(i), position.getY(i))
+      uv.setXY(i, (r - inner) / (outer - inner), 0.5)
+    }
+    return ring
+  }, [inner, outer])
+  useEffect(() => () => geometry.dispose(), [geometry])
+  return geometry
+}
+
+function SaturnRing({ size }) {
+  const texture = useSrgbTexture(SATURN_RING_TEXTURE)
+  const geometry = useRingGeometry(size * 1.3, size * 2.2)
   return (
-    <meshStandardMaterial color="#3a0f0f" emissive="#ff5a1f" emissiveIntensity={0.8} roughness={0.7} />
+    <mesh geometry={geometry} rotation-x={-Math.PI / 2} receiveShadow>
+      <meshStandardMaterial
+        map={texture}
+        transparent
+        side={DoubleSide}
+        depthWrite={false}
+        roughness={0.9}
+      />
+    </mesh>
   )
 }
 
-export default function Planet({ page, orbit, full }) {
+function Moon({ size }) {
+  const texture = useSrgbTexture(MOON_TEXTURE)
+  const ref = useRef()
+  const angle = useRef(0)
+  useFrame((_, delta) => {
+    angle.current += delta * 0.6
+    if (!ref.current) return
+    ref.current.position.set(
+      Math.cos(angle.current) * size * 2.4,
+      size * 0.3,
+      Math.sin(angle.current) * size * 2.4,
+    )
+    ref.current.rotation.y += delta * 0.6
+  })
+  return (
+    <mesh ref={ref} castShadow receiveShadow>
+      <sphereGeometry args={[size * 0.27, 24, 24]} />
+      <meshStandardMaterial map={texture} roughness={1} />
+    </mesh>
+  )
+}
+
+export default function Planet({ page, orbit, planet, full }) {
   const navigate = useNavigate()
   const groupRef = useRef()
   const meshRef = useRef()
   const angleRef = useRef(orbit.startAngle)
+  const texture = useSrgbTexture(planet.texture)
 
   const activeSlug = useSceneStore((s) => s.activeSlug)
   const hoveredSlug = useSceneStore((s) => s.hoveredSlug)
@@ -49,7 +89,7 @@ export default function Planet({ page, orbit, full }) {
     if (!frozen) angleRef.current += delta * orbit.speed
     const [x, y, z] = orbitPosition(orbit, angleRef.current)
     groupRef.current.position.set(x, y, z)
-    if (meshRef.current) meshRef.current.rotation.y += delta * 0.4
+    if (meshRef.current) meshRef.current.rotation.y += delta * planet.spin
   })
 
   useEffect(() => {
@@ -68,45 +108,51 @@ export default function Planet({ page, orbit, full }) {
   )
 
   const go = () => navigate(`/${page.slug}`)
+  const hasContent = page.sections.length > 0
 
   return (
     <group ref={groupRef}>
-      <mesh
-        ref={meshRef}
-        castShadow={full}
-        receiveShadow={full}
-        onPointerOver={(e) => {
-          e.stopPropagation()
-          setHoveredSlug(page.slug)
-          document.body.style.cursor = 'pointer'
-        }}
-        onPointerOut={() => {
-          // Only give up the hover if it is still ours -- pointer-out can
-          // arrive after another planet has already claimed it.
-          if (useSceneStore.getState().hoveredSlug !== page.slug) return
-          setHoveredSlug(null)
-          document.body.style.cursor = 'auto'
-        }}
-        onClick={(e) => {
-          e.stopPropagation()
-          go()
-        }}
-      >
-        <sphereGeometry args={[orbit.size, 48, 48]} />
-        <PlanetMaterial kind={orbit.material} full={full} />
-      </mesh>
+      <group rotation-z={planet.tilt}>
+        <mesh
+          ref={meshRef}
+          castShadow={full}
+          receiveShadow={full}
+          onPointerOver={(e) => {
+            e.stopPropagation()
+            setHoveredSlug(page.slug)
+            document.body.style.cursor = 'pointer'
+          }}
+          onPointerOut={() => {
+            // Only give up the hover if it is still ours -- pointer-out can
+            // arrive after another planet has already claimed it.
+            if (useSceneStore.getState().hoveredSlug !== page.slug) return
+            setHoveredSlug(null)
+            document.body.style.cursor = 'auto'
+          }}
+          onClick={(e) => {
+            e.stopPropagation()
+            go()
+          }}
+        >
+          <sphereGeometry args={[orbit.size, 64, 64]} />
+          <meshStandardMaterial map={texture} roughness={0.85} metalness={0} />
+        </mesh>
+        {planet.ring && <SaturnRing size={orbit.size} />}
+      </group>
 
-      {frozen && (
-        <mesh scale={1.3}>
-          <sphereGeometry args={[orbit.size, 20, 20]} />
-          <meshBasicMaterial color="#4df1ff" wireframe transparent opacity={0.25} />
+      {planet.moon && <Moon size={orbit.size} />}
+
+      {isHovered && !isActive && (
+        <mesh scale={1.25}>
+          <sphereGeometry args={[orbit.size, 24, 24]} />
+          <meshBasicMaterial color="#ffffff" wireframe transparent opacity={0.12} />
         </mesh>
       )}
 
       {/* Hidden while active: the camera parks right beside the planet, where
           the distance-scaled label would blow up and cover the pane. */}
       {!isActive && (
-        <Html position={[0, orbit.size + 0.35, 0]} center distanceFactor={10} occlude={false}>
+        <Html position={[0, orbit.size * 1.35 + 0.3, 0]} center occlude={false}>
           {/* Decorative: the HUD nav is the accessible route to every page. */}
           <a
             href={`/${page.slug}`}
@@ -118,9 +164,9 @@ export default function Planet({ page, orbit, full }) {
               go()
             }}
           >
-            <span className="planet-label__title">// {page.label.toLowerCase()}</span>
-            <span className="planet-label__blurb" style={{ opacity: frozen ? 1 : 0 }}>
-              {page.blurb}
+            <span className="planet-label__title">{page.planetName}</span>
+            <span className="planet-label__caption" style={{ opacity: frozen || hasContent ? 1 : 0 }}>
+              {hasContent ? page.label : 'in development...'}
             </span>
           </a>
         </Html>
