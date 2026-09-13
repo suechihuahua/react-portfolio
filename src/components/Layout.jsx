@@ -21,7 +21,9 @@ export default function Layout() {
   const setActiveSlug = useSceneStore((s) => s.setActiveSlug)
   const renderTier = useSceneStore((s) => s.renderTier)
   const degradeToStatic = useSceneStore((s) => s.degradeToStatic)
-  const revealed = useSceneStore((s) => s.flyProgress >= 0.6)
+  // The static tier has no camera flight to wait on -- gating on flyProgress
+  // alone would strand the pane invisible if the Scene unmounts mid-flight.
+  const revealed = useSceneStore((s) => s.renderTier === 'static' || s.flyProgress >= 0.6)
 
   const isStatic = renderTier === 'static'
 

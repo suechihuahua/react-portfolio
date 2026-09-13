@@ -30,12 +30,15 @@ export default function Scene() {
   const narrow = useSceneStore((s) => s.isNarrowViewport)
   const effectsEnabled = useSceneStore((s) => s.effectsEnabled)
   const setEffectsEnabled = useSceneStore((s) => s.setEffectsEnabled)
+  const dprScale = useSceneStore((s) => s.dprScale)
+  const setDprScale = useSceneStore((s) => s.setDprScale)
   const full = renderTier === 'full'
   const home = getHomeCamera({ narrow }, pages.length)
+  const maxDpr = (full ? 2 : 1.25) * dprScale
 
   return (
     <Canvas
-      dpr={full ? [1, 2] : [1, 1.25]}
+      dpr={[1, maxDpr]}
       shadows={full ? 'soft' : false}
       gl={{
         antialias: false,
@@ -47,7 +50,8 @@ export default function Scene() {
     >
       <color attach="background" args={['#06040c']} />
       <fog attach="fog" args={['#06040c', 30, 80]} />
-      <ambientLight intensity={0.12} color="#8ab4ff" />
+      <ambientLight intensity={0.35} color="#8ab4ff" />
+      <directionalLight position={[-6, 8, 12]} intensity={0.6} color="#cfe6ff" />
 
       <Environment resolution={64} frames={1}>
         <Lightformer intensity={1.2} color="#9fd8ff" position={[0, 8, -4]} scale={[12, 4, 1]} />
@@ -68,7 +72,11 @@ export default function Scene() {
       {full && (
         <PerformanceMonitor
           flipflops={3}
-          onDecline={() => setEffectsEnabled(false)}
+          // Spec §3.4: drop resolution first, only then give up post-processing.
+          onDecline={() => {
+            if (dprScale > 0.75) setDprScale(0.75)
+            else setEffectsEnabled(false)
+          }}
           onFallback={() => setEffectsEnabled(false)}
         />
       )}

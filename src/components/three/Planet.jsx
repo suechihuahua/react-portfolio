@@ -25,7 +25,7 @@ function PlanetMaterial({ kind, full }) {
     return <meshStandardMaterial color="#9aa4b8" metalness={1} roughness={0.35} envMapIntensity={1.4} />
   }
   return (
-    <meshStandardMaterial color="#3a0f0f" emissive="#ff5a1f" emissiveIntensity={1.4} roughness={0.7} />
+    <meshStandardMaterial color="#3a0f0f" emissive="#ff5a1f" emissiveIntensity={0.8} roughness={0.7} />
   )
 }
 
@@ -58,6 +58,15 @@ export default function Planet({ page, orbit, full }) {
     setFocus({ slug: page.slug, position, orbit })
   }, [isActive, orbit, page.slug, setFocus])
 
+  // A planet can unmount while it still owns the pointer cursor (tier change,
+  // simple-view toggle); without this the page is left stuck on `pointer`.
+  useEffect(
+    () => () => {
+      document.body.style.cursor = 'auto'
+    },
+    [],
+  )
+
   const go = () => navigate(`/${page.slug}`)
 
   return (
@@ -72,6 +81,9 @@ export default function Planet({ page, orbit, full }) {
           document.body.style.cursor = 'pointer'
         }}
         onPointerOut={() => {
+          // Only give up the hover if it is still ours -- pointer-out can
+          // arrive after another planet has already claimed it.
+          if (useSceneStore.getState().hoveredSlug !== page.slug) return
           setHoveredSlug(null)
           document.body.style.cursor = 'auto'
         }}
@@ -91,24 +103,28 @@ export default function Planet({ page, orbit, full }) {
         </mesh>
       )}
 
-      <Html position={[0, orbit.size + 0.35, 0]} center distanceFactor={10} occlude={false}>
-        {/* Decorative: the HUD nav is the accessible route to every page. */}
-        <a
-          href={`/${page.slug}`}
-          tabIndex={-1}
-          aria-hidden="true"
-          className={`planet-label${isActive ? ' planet-label--active' : ''}`}
-          onClick={(e) => {
-            e.preventDefault()
-            go()
-          }}
-        >
-          <span className="planet-label__title">// {page.label.toLowerCase()}</span>
-          <span className="planet-label__blurb" style={{ opacity: frozen ? 1 : 0 }}>
-            {page.blurb}
-          </span>
-        </a>
-      </Html>
+      {/* Hidden while active: the camera parks right beside the planet, where
+          the distance-scaled label would blow up and cover the pane. */}
+      {!isActive && (
+        <Html position={[0, orbit.size + 0.35, 0]} center distanceFactor={10} occlude={false}>
+          {/* Decorative: the HUD nav is the accessible route to every page. */}
+          <a
+            href={`/${page.slug}`}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="planet-label"
+            onClick={(e) => {
+              e.preventDefault()
+              go()
+            }}
+          >
+            <span className="planet-label__title">// {page.label.toLowerCase()}</span>
+            <span className="planet-label__blurb" style={{ opacity: frozen ? 1 : 0 }}>
+              {page.blurb}
+            </span>
+          </a>
+        </Html>
+      )}
     </group>
   )
 }

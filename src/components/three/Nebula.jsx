@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { AdditiveBlending, CanvasTexture, SRGBColorSpace } from 'three'
 
@@ -28,6 +28,9 @@ function useGlowTexture(color) {
 function Cloud({ color, position, scale, drift }) {
   const texture = useGlowTexture(color)
   const ref = useRef()
+
+  // The texture is built by hand, so R3F's auto-dispose never sees it.
+  useEffect(() => () => texture.dispose(), [texture])
 
   useFrame((state) => {
     if (ref.current) ref.current.material.rotation = state.clock.elapsedTime * drift

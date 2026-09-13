@@ -26,6 +26,12 @@ function computeTier(simpleView) {
   return detectRenderTier({ ...readEnvironment(window), simpleView })
 }
 
+// Every recompute path goes through this so a degraded (crashed) scene stays
+// static no matter what the environment now says.
+function tierFor(state, simpleView) {
+  return state.degraded ? 'static' : computeTier(simpleView)
+}
+
 const initialSimpleView = readStoredSimpleView()
 
 export const useSceneStore = create((set, get) => ({
@@ -40,6 +46,8 @@ export const useSceneStore = create((set, get) => ({
   isNarrowViewport: narrowViewportQuery?.matches ?? false,
   simpleView: initialSimpleView,
   renderTier: computeTier(initialSimpleView),
+  degraded: false,
+  dprScale: 1,
 
   setBooted: (booted) => set({ booted }),
   setSceneReady: (sceneReady) => set({ sceneReady }),
@@ -48,10 +56,11 @@ export const useSceneStore = create((set, get) => ({
   setFocus: (focus) => set({ focus }),
   setFlyProgress: (flyProgress) => set({ flyProgress }),
   setEffectsEnabled: (effectsEnabled) => set({ effectsEnabled }),
+  setDprScale: (dprScale) => set({ dprScale }),
   setPrefersReducedMotion: (prefersReducedMotion) =>
-    set({ prefersReducedMotion, renderTier: computeTier(get().simpleView) }),
+    set({ prefersReducedMotion, renderTier: tierFor(get(), get().simpleView) }),
   setIsNarrowViewport: (isNarrowViewport) =>
-    set({ isNarrowViewport, renderTier: computeTier(get().simpleView) }),
+    set({ isNarrowViewport, renderTier: tierFor(get(), get().simpleView) }),
   setSimpleView: (simpleView) => {
     if (canUseDom) {
       try {
@@ -60,9 +69,13 @@ export const useSceneStore = create((set, get) => ({
         /* storage blocked */
       }
     }
-    set({ simpleView, renderTier: computeTier(simpleView) })
+    // The Scene unmounts/remounts across this toggle; leaving flyProgress mid
+    // flight would strand the overlay pane invisible.
+    set({ simpleView, renderTier: tierFor(get(), simpleView), flyProgress: 1 })
   },
-  degradeToStatic: () => set({ renderTier: 'static' }),
+  // Sticky: once the scene has crashed we never resurrect it from a resize or
+  // a media-query change.
+  degradeToStatic: () => set({ degraded: true, renderTier: 'static', flyProgress: 1 }),
 }))
 
 export function watchMediaPreferences() {
