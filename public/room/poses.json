@@ -5,8 +5,8 @@
   },
   "pc": {
     "src": "/room/pose-pc.png",
-    "width": 838,
-    "height": 1313
+    "width": 696,
+    "height": 1270
   },
   "about": {
     "src": "/room/pose-about.png",
@@ -25,8 +25,8 @@
   },
   "skills": {
     "src": "/room/pose-skills.png",
-    "width": 545,
-    "height": 1464
+    "width": 367,
+    "height": 1460
   },
   "hobbies": {
     "src": "/room/pose-hobbies.png",

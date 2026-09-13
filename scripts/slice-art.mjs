@@ -16,12 +16,22 @@ const SHEET = existsSync(UPSCALED) ? UPSCALED : ORIGINAL
 const OUT = 'public/room'
 const ROOM = { x: 0, y: 0, w: 1536, h: 440, outWidth: 4096 }
 const POSE_OUT_SCALE = 3 // pose files are 3x the original panel size
+// pc is cut before its drawn monitor/desk (the room supplies those) and
+// skills after its drawn wall, so the figures sit on the real furniture.
+// `erase` rectangles (panel coordinates) remove drawn furniture that would
+// clash with the room: the pc pose's desk edge below and right of his hands.
 const POSES = {
-  pc: { x: 14, y: 446, w: 282, h: 490 },
+  pc: {
+    x: 14,
+    y: 446,
+    w: 232,
+    h: 490,
+    erase: [{ x: 222, y: 196, w: 10, h: 294 }],
+  },
   about: { x: 302, y: 446, w: 216, h: 490 },
   education: { x: 520, y: 446, w: 262, h: 490 },
   work: { x: 788, y: 446, w: 226, h: 490 },
-  skills: { x: 1022, y: 446, w: 212, h: 490 },
+  skills: { x: 1086, y: 446, w: 148, h: 490 },
   hobbies: { x: 1248, y: 446, w: 274, h: 490 },
 }
 
@@ -94,6 +104,9 @@ try {
         canvas.height = h
         const ctx = canvas.getContext('2d')
         ctx.drawImage(window.sheet, r.x * factor, r.y * factor, w, h, 0, 0, w, h)
+        for (const e of r.erase ?? []) {
+          ctx.clearRect(e.x * factor, e.y * factor, e.w * factor, e.h * factor)
+        }
         const image = ctx.getImageData(0, 0, w, h)
         window.keyOutCheckerboard(image.data, w, h)
         if (factor > 1) window.clearWhereMaskClear(image.data, w, h, mask, r.w, r.h, factor)

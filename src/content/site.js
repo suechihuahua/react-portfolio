@@ -3,6 +3,7 @@
 //   • spot   – where the camera looks: x/y in % of the room image, zoom factor
 //   • avatar – where the pose sprite stands: bottom-centre x/y in %, height in
 //              % of the room height
+//   • marker – where the pulsing hotspot sits on the object itself (room %)
 //   • pose   – which cut-out from public/room/pose-<pose>.png
 //   • lines  – what he says in the dialogue box before the card appears
 //   • blocks – the card content (see src/components/SectionCard.jsx for kinds:
@@ -24,7 +25,7 @@ export const ROOM_IMAGE = { src: '/room/room.jpg', width: 4096, height: 1173 }
 // Idle state: sitting at the PC, camera wide on the desk side.
 export const home = {
   spot: { x: 60, y: 52, zoom: 1.05 },
-  avatar: { x: 63.5, y: 97, height: 66 },
+  avatar: { x: 62, y: 100, height: 78 },
   pose: 'pc',
 }
 
@@ -35,6 +36,7 @@ export const sections = [
     pose: 'about',
     spot: { x: 52, y: 60, zoom: 1.32 },
     avatar: { x: 52, y: 99, height: 70 },
+    marker: { x: 62, y: 45 },
     lines: [
       "Hi, I'm Natsuo Fujita.",
       'Computer Science undergraduate at Nanyang Technological University, class of 2029.',
@@ -62,6 +64,7 @@ export const sections = [
     pose: 'education',
     spot: { x: 44, y: 58, zoom: 1.32 },
     avatar: { x: 47, y: 99, height: 70 },
+    marker: { x: 44, y: 28 },
     lines: ['This is where the studying happens.', 'NTU for computer science, after A-levels at Tampines Meridian.'],
     blocks: [
       {
@@ -87,6 +90,7 @@ export const sections = [
     pose: 'work',
     spot: { x: 71, y: 58, zoom: 1.32 },
     avatar: { x: 74, y: 99, height: 70 },
+    marker: { x: 51.5, y: 62 },
     lines: ['Two years of National Service taught me a lot about keeping things running.', 'Before that, I worked the kitchen and the till at Tori-Q.'],
     blocks: [
       {
@@ -116,7 +120,8 @@ export const sections = [
     label: 'Projects',
     pose: 'pc',
     spot: { x: 68, y: 55, zoom: 1.4 },
-    avatar: { x: 63.5, y: 97, height: 66 },
+    avatar: { x: 62, y: 100, height: 78 },
+    marker: { x: 76, y: 38 },
     lines: ['This is where I build things.', 'Latest: a Roblox game with my team for the Garena Hackathon — and this room you are standing in.'],
     blocks: [
       {
@@ -141,8 +146,9 @@ export const sections = [
     slug: 'skills',
     label: 'Skills',
     pose: 'skills',
-    spot: { x: 56, y: 58, zoom: 1.32 },
-    avatar: { x: 56.5, y: 99, height: 70 },
+    spot: { x: 55, y: 58, zoom: 1.32 },
+    avatar: { x: 54.2, y: 99, height: 70 },
+    marker: { x: 56, y: 22 },
     lines: ['The toolbox so far.', 'Python, C, C++ and Java for the most part — Git and the web on the side.'],
     blocks: [
       {
@@ -161,6 +167,7 @@ export const sections = [
     pose: 'hobbies',
     spot: { x: 23, y: 62, zoom: 1.5 },
     avatar: { x: 24, y: 99, height: 62 },
+    marker: { x: 20, y: 62 },
     lines: ['When the work is done: games, the gym, and a very long anime backlog.', 'I was vice-captain of the basketball team — still play when I can.'],
     blocks: [
       {

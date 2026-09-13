@@ -6,7 +6,7 @@
 
 :root {
   --bg: #0a0710;
-  --panel: rgba(14, 10, 22, 0.78);
+  --panel: rgba(14, 10, 22, 0.92);
   --ink: #f1ecf4;
   --ink-soft: #a79fb3;
   --accent: #6fd3ff;
@@ -128,12 +128,13 @@ button {
   -webkit-user-drag: none;
 }
 
+/* Soft radial gradients only -- no blur filters, which repaint every frame
+   while the stage animates. */
 .room__glow {
   position: absolute;
   pointer-events: none;
   mix-blend-mode: screen;
   border-radius: 50%;
-  filter: blur(40px);
 }
 
 .room__glow--monitors {
@@ -171,6 +172,17 @@ button {
   pointer-events: none;
 }
 
+.avatar__shadow {
+  position: absolute;
+  left: 50%;
+  bottom: -1.5%;
+  width: 70%;
+  aspect-ratio: 5 / 1;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0) 70%);
+}
+
 .avatar__sprite {
   position: absolute;
   bottom: 0;
@@ -180,12 +192,8 @@ button {
   transform: translateX(-50%);
   pointer-events: auto;
   cursor: pointer;
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.45));
-  transition: filter 0.2s ease;
-}
-
-.avatar__sprite:hover {
-  filter: drop-shadow(0 12px 18px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 10px rgba(111, 211, 255, 0.5));
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .hotspot {
@@ -200,17 +208,22 @@ button {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.2rem;
-  opacity: 0.85;
+  gap: 0.25rem;
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.hotspot--hidden {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .hotspot__ring {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  background: rgba(111, 211, 255, 0.35);
-  box-shadow: 0 0 0 6px rgba(111, 211, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.95);
+  background: rgba(255, 176, 102, 0.5);
   animation: pulse 2.4s ease-out infinite;
 }
 
@@ -218,21 +231,18 @@ button {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: rgba(10, 7, 16, 0.75);
   white-space: nowrap;
-}
-
-.hotspot--active {
-  opacity: 0;
-  pointer-events: none;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 4px rgba(111, 211, 255, 0.35);
+    box-shadow: 0 0 0 3px rgba(255, 176, 102, 0.4);
   }
   100% {
-    box-shadow: 0 0 0 16px rgba(111, 211, 255, 0);
+    box-shadow: 0 0 0 14px rgba(255, 176, 102, 0);
   }
 }
 
@@ -247,13 +257,32 @@ button {
 .door-intro {
   position: absolute;
   inset: 0;
-  background: #000;
+  background: radial-gradient(ellipse at 50% 60%, #14100f 0%, #000 65%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2rem;
-  perspective: 1400px;
+  gap: 2.2rem;
+  overflow: hidden;
+}
+
+.door-intro__dust {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 230, 190, 0.5), transparent 60%),
+    radial-gradient(1.5px 1.5px at 70% 20%, rgba(255, 230, 190, 0.35), transparent 60%),
+    radial-gradient(1px 1px at 40% 75%, rgba(255, 230, 190, 0.4), transparent 60%),
+    radial-gradient(1px 1px at 85% 65%, rgba(255, 230, 190, 0.3), transparent 60%),
+    radial-gradient(1.5px 1.5px at 55% 50%, rgba(255, 230, 190, 0.25), transparent 60%);
+  animation: drift 18s linear infinite;
+}
+
+@keyframes drift {
+  to {
+    transform: translateY(-40px);
+  }
 }
 
 .door {
@@ -263,104 +292,117 @@ button {
   cursor: pointer;
 }
 
+.door__scene {
+  position: relative;
+  display: block;
+  width: clamp(150px, 24vh, 240px);
+  perspective: 1100px;
+}
+
 .door__frame {
   position: relative;
   display: block;
-  width: clamp(150px, 22vh, 230px);
-  aspect-ratio: 1 / 2.15;
-  perspective: 1200px;
+  aspect-ratio: 200 / 430;
+  padding: 3.5%;
+  background: linear-gradient(90deg, #3a3129, #574a3d 20%, #4a3e33 80%, #2f2821);
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.5),
+    0 40px 70px rgba(0, 0, 0, 0.85);
+  perspective: 1100px;
 }
 
 .door__light {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(to bottom, #ffe9c2, #ffb066 60%, #ff8a3d);
+  inset: 3.5%;
+  background: linear-gradient(to bottom, #fff2d6, #ffc27a 55%, #ff9a4a);
   opacity: 0;
-  transform: scale(0.98);
-  filter: blur(0);
-  transition: opacity 0.6s ease 0.35s, filter 0.9s ease 0.35s, transform 1.2s ease 0.35s;
+  transition: opacity 0.5s ease 0.3s;
+}
+
+.door__hinge-side {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  transition: transform 1.5s cubic-bezier(0.65, 0, 0.3, 1);
+  box-shadow: 4px 0 12px rgba(0, 0, 0, 0.5);
 }
 
 .door__leaf {
-  position: absolute;
-  inset: 0;
-  transform-origin: left center;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.1)),
-    repeating-linear-gradient(
-      100deg,
-      rgba(0, 0, 0, 0) 0 9px,
-      rgba(0, 0, 0, 0.05) 9px 10px
-    ),
-    #e6dfd2;
-  border: 3px solid #bfb5a5;
-  box-shadow:
-    inset 0 0 0 4px #d9d1c2,
-    0 30px 60px rgba(0, 0, 0, 0.8);
-  transition: transform 1.4s cubic-bezier(0.7, 0, 0.3, 1);
-  backface-visibility: hidden;
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.door__panel {
+.door__rays {
   position: absolute;
-  background: #ebe4d6;
-  border: 2px solid #cfc6b4;
-  box-shadow: inset 2px 2px 4px rgba(255, 255, 255, 0.6), inset -2px -2px 4px rgba(0, 0, 0, 0.12);
-}
-
-.door__panel--a,
-.door__panel--b {
-  top: 7%;
-  height: 17%;
-}
-.door__panel--c,
-.door__panel--d {
-  top: 30%;
-  height: 26%;
-}
-.door__panel--e,
-.door__panel--f {
-  top: 62%;
-  height: 30%;
-}
-.door__panel--a,
-.door__panel--c,
-.door__panel--e {
-  left: 10%;
-  width: 34%;
-}
-.door__panel--b,
-.door__panel--d,
-.door__panel--f {
-  right: 10%;
-  width: 34%;
-}
-
-.door__knob {
-  position: absolute;
-  right: 8%;
+  left: 50%;
   top: 50%;
-  width: 6%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #ffe7a8, #a8862f);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  width: 700%;
+  height: 700%;
+  transform: translate(-50%, -50%);
+  background: conic-gradient(
+    from 0deg,
+    rgba(255, 200, 130, 0) 0deg,
+    rgba(255, 200, 130, 0.16) 6deg,
+    rgba(255, 200, 130, 0) 14deg,
+    rgba(255, 200, 130, 0) 40deg,
+    rgba(255, 200, 130, 0.12) 46deg,
+    rgba(255, 200, 130, 0) 54deg,
+    rgba(255, 200, 130, 0) 95deg,
+    rgba(255, 200, 130, 0.14) 101deg,
+    rgba(255, 200, 130, 0) 110deg,
+    rgba(255, 200, 130, 0) 150deg,
+    rgba(255, 200, 130, 0.1) 157deg,
+    rgba(255, 200, 130, 0) 166deg,
+    rgba(255, 200, 130, 0) 210deg,
+    rgba(255, 200, 130, 0.14) 216deg,
+    rgba(255, 200, 130, 0) 226deg,
+    rgba(255, 200, 130, 0) 275deg,
+    rgba(255, 200, 130, 0.12) 281deg,
+    rgba(255, 200, 130, 0) 290deg,
+    rgba(255, 200, 130, 0) 360deg
+  );
+  mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.9s ease 0.5s;
 }
 
-.door__step {
+.door__sill {
   position: absolute;
-  left: -12%;
-  right: -12%;
-  bottom: -4%;
-  height: 4%;
-  background: linear-gradient(to bottom, #3a3530, #15120f);
+  left: -8%;
+  right: -8%;
+  bottom: -2.5%;
+  height: 3%;
+  background: linear-gradient(to bottom, #574a3d, #1b1612);
   border-radius: 2px;
+}
+
+.door__reflection {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  aspect-ratio: 200 / 430;
+  margin-top: 2.5%;
+  padding: 3.5%;
+  transform: scaleY(-1);
+  opacity: 0.22;
+  mask-image: linear-gradient(to top, rgba(0, 0, 0, 0.9), transparent 45%);
+  pointer-events: none;
+}
+
+.door__reflection .door__leaf {
+  filter: blur(1.5px);
 }
 
 .door-intro__hint {
   font-family: var(--mono);
   font-size: 0.85rem;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: #9a948c;
   opacity: 0;
   transition: opacity 1s ease;
@@ -377,14 +419,20 @@ button {
   }
 }
 
-.door-intro--opening .door__leaf {
-  transform: rotateY(-108deg);
+.door-intro--opening .door__hinge-side {
+  transform: rotateY(-105deg);
 }
 
-.door-intro--opening .door__light {
+.door-intro--opening .door__light,
+.door-intro--opening .door__rays {
   opacity: 1;
-  filter: blur(18px);
-  transform: scale(18);
+}
+
+.door-intro--opening .door__frame {
+  box-shadow:
+    inset 0 0 0 2px rgba(0, 0, 0, 0.5),
+    0 0 120px 30px rgba(255, 190, 120, 0.45);
+  transition: box-shadow 1s ease 0.4s;
 }
 
 .door-intro--opening .door-intro__hint {
@@ -515,7 +563,6 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 1rem 1.25rem 1.1rem;
-  backdrop-filter: blur(12px);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55);
   cursor: pointer;
   display: grid;
@@ -597,7 +644,6 @@ button {
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: clamp(1.4rem, 3.5vw, 2.25rem);
-  backdrop-filter: blur(14px);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
 }
 
