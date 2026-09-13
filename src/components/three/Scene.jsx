@@ -2,7 +2,8 @@ import { Suspense, useRef } from 'react'
 import { Canvas, useFrame } from '@react-three/fiber'
 import { ACESFilmicToneMapping } from 'three'
 import { Environment, Lightformer, PerformanceMonitor } from '@react-three/drei'
-import { EffectComposer, Bloom, Vignette, SMAA } from '@react-three/postprocessing'
+import { EffectComposer, Bloom, Vignette, SMAA, ToneMapping } from '@react-three/postprocessing'
+import { ToneMappingMode } from 'postprocessing'
 import { pages } from '../../content/site.js'
 import { useSceneStore } from '../../store/useSceneStore.js'
 import { getHomeCamera } from './systemLayout.js'
@@ -74,6 +75,7 @@ export default function Scene() {
 
       {full && effectsEnabled && (
         <EffectComposer multisampling={0}>
+          <ToneMapping mode={ToneMappingMode.ACES_FILMIC} />
           <Bloom intensity={0.9} luminanceThreshold={0.6} luminanceSmoothing={0.25} mipmapBlur />
           <Vignette eskil={false} offset={0.2} darkness={0.8} />
           <SMAA />

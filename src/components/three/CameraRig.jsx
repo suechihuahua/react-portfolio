@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useFrame, useThree } from '@react-three/fiber'
 import gsap from 'gsap'
 import { pages } from '../../content/site.js'
@@ -15,17 +15,19 @@ export default function CameraRig() {
   const setFlyProgress = useSceneStore((s) => s.setFlyProgress)
   const lookAt = useRef({ x: 0, y: 0, z: 0 })
   const idle = useRef(0)
+  const home = useMemo(() => getHomeCamera({ narrow }, pages.length), [narrow])
 
   useEffect(() => {
     let target
     if (!activeSlug) {
-      target = getHomeCamera({ narrow }, pages.length)
+      target = home
     } else if (focus && focus.slug === activeSlug) {
       target = getCameraTarget(focus.position, focus.orbit)
     } else {
       return undefined // the planet has not reported its frozen position yet
     }
 
+    idle.current = 0
     setFlyProgress(0)
     const progress = { t: 0 }
     const timeline = gsap.timeline({
@@ -45,15 +47,15 @@ export default function CameraRig() {
     timeline.to(progress, { t: 1, ease: 'none', onUpdate: () => setFlyProgress(progress.t) }, 0)
 
     return () => timeline.kill()
-  }, [activeSlug, focus, narrow, camera, setFlyProgress])
+  }, [activeSlug, focus, narrow, home, camera, setFlyProgress])
 
   useFrame((_, delta) => {
     if (activeSlug) return
     if (useSceneStore.getState().flyProgress < 1) return
     idle.current += delta
-    const home = getHomeCamera({ narrow }, pages.length)
-    camera.position.x = home.position[0] + Math.sin(idle.current * 0.12) * 0.6
-    camera.position.y = home.position[1] + Math.cos(idle.current * 0.09) * 0.25
+    const ramp = Math.min(idle.current / 2, 1)
+    camera.position.x = home.position[0] + Math.sin(idle.current * 0.12) * 0.6 * ramp
+    camera.position.y = home.position[1] + Math.cos(idle.current * 0.09) * 0.25 * ramp
     camera.lookAt(0, 0, 0)
   })
 

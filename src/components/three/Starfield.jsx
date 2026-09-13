@@ -23,6 +23,7 @@ function Layer({ count, radius, size, opacity, spin, shell }) {
         sizeAttenuation
         depthWrite={false}
         opacity={opacity}
+        fog={false}
       />
     </Points>
   )
