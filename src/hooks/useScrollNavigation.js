@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 export const SCROLL_COOLDOWN_MS = 900
 const WHEEL_THRESHOLD = 24
 const SWIPE_THRESHOLD = 60
-const SCROLL_CONTAINER = '.overlay-pane__inner'
+const SCROLL_CONTAINER = '.overlay-pane__inner, .dialogue'
 
 // One planet per gesture: wheel, vertical swipe, or arrow/page keys step
 // through `routes` in order. Gestures that start inside the content card are

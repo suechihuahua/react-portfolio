@@ -1,5 +1,5 @@
-// Regenerates the static-tier poster, the OG image, and PNG favicons from the
-// live scene. Run with: npm run capture
+// Regenerates the OG image and PNG favicons from the live room.
+// Run with: npm run capture
 import { createServer } from 'vite'
 import { chromium } from 'playwright'
 import { readFileSync } from 'node:fs'
@@ -8,16 +8,14 @@ const server = await createServer({ server: { port: 4174, strictPort: true }, lo
 await server.listen()
 const base = 'http://localhost:4174'
 
-const browser = await chromium.launch({
-  args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
-})
+const browser = await chromium.launch()
 
 try {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } })
-  await page.goto(`${base}/?tier=full&capture`)
-  await page.waitForTimeout(4500)
-  await page.screenshot({ path: 'public/hero-poster.jpg', type: 'jpeg', quality: 82 })
-  console.log('wrote public/hero-poster.jpg')
+  await page.goto(`${base}/?capture`)
+  await page.waitForTimeout(2500)
+  await page.screenshot({ path: 'public/room-poster.jpg', type: 'jpeg', quality: 82 })
+  console.log('wrote public/room-poster.jpg')
 
   const og = await browser.newPage({ viewport: { width: 1200, height: 630 } })
   await og.route('**/og-template', (route) =>
@@ -34,7 +32,7 @@ try {
   ]) {
     const icon = await browser.newPage({ viewport: { width: size, height: size } })
     await icon.setContent(
-      `<body style="margin:0;background:#06040c"><img src="${base}/favicon.svg" style="width:${size}px;height:${size}px;display:block"></body>`,
+      `<body style="margin:0;background:#0a0710"><img src="${base}/favicon.svg" style="width:${size}px;height:${size}px;display:block"></body>`,
     )
     await icon.waitForTimeout(300)
     await icon.screenshot({ path: file, type: 'png', omitBackground: false })

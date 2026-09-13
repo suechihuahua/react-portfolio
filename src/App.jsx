@@ -1,19 +1,19 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout.jsx'
 import Home from './components/Home.jsx'
-import Page from './components/Page.jsx'
-import { pages } from './content/site.js'
+import SectionCard from './components/SectionCard.jsx'
+import { sections } from './content/site.js'
 
 function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
-        {pages.map((page) => (
+        {sections.map((section) => (
           <Route
-            key={page.slug}
-            path={page.slug}
-            element={<Page page={page} />}
+            key={section.slug}
+            path={section.slug}
+            element={<SectionCard section={section} />}
           />
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -1,11 +1,11 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, waitFor, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
-import { useSceneStore } from '../store/useSceneStore.js'
+import { useRoomStore } from '../store/useRoomStore.js'
 
-vi.mock('./three/Scene.jsx', () => ({
-  default: () => <div data-testid="scene" />,
+vi.mock('./RoomStage.jsx', () => ({
+  default: () => <div data-testid="room" />,
 }))
 
 function renderLayout(path = '/') {
@@ -24,72 +24,60 @@ function renderLayout(path = '/') {
 
 describe('Layout', () => {
   beforeEach(() => {
-    useSceneStore.setState({
-      booted: false,
-      sceneReady: false,
-      activeSlug: null,
-      flyProgress: 1,
-      renderTier: 'lite',
-    })
+    useRoomStore.setState({ entered: false, activeSlug: null, dialogueDone: false })
+    window.sessionStorage.clear()
   })
 
-  it('shows the boot screen and mounts the scene on 3D tiers', async () => {
+  it('shows only the door on a first visit', () => {
     renderLayout()
-    expect(screen.getByRole('button', { name: /loading scene/ })).toBeInTheDocument()
-    expect(await screen.findByTestId('scene')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /open the door/i })).toBeInTheDocument()
+    expect(screen.queryByTestId('room')).not.toBeInTheDocument()
     expect(screen.queryByText('home content')).not.toBeInTheDocument()
   })
 
-  it('skips the boot screen and shows the poster on the static tier', () => {
-    useSceneStore.setState({ renderTier: 'static' })
+  it('opens the door and enters the room', () => {
+    useRoomStore.setState({ prefersReducedMotion: true })
     renderLayout()
-    expect(screen.queryByRole('button', { name: /loading scene/ })).not.toBeInTheDocument()
-    expect(document.querySelector('img.static-hero')).not.toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /open the door/i }))
+    expect(useRoomStore.getState().entered).toBe(true)
+    expect(screen.getByTestId('room')).toBeInTheDocument()
     expect(screen.getByText('home content')).toBeInTheDocument()
+    expect(window.sessionStorage.getItem('nf:entered')).toBe('true')
   })
 
-  it('reveals the pane on the static tier even with flyProgress stuck at 0', async () => {
-    // The static tier has no camera flight, so a flyProgress left over from an
-    // interrupted flight must not keep the pane hidden.
-    useSceneStore.setState({ renderTier: 'static', flyProgress: 0 })
-    renderLayout()
-    expect(screen.getByText('home content')).toBeInTheDocument()
-    const pane = document.getElementById('overlay-content')
-    expect(pane).not.toBeNull()
-    await waitFor(() => expect(pane.style.opacity).not.toBe('0'))
+  it('skips the door on a deep link and starts the dialogue', () => {
+    renderLayout('/about')
+    expect(screen.queryByRole('button', { name: /open the door/i })).not.toBeInTheDocument()
+    expect(useRoomStore.getState().activeSlug).toBe('about')
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.queryByText('about content')).not.toBeInTheDocument()
   })
 
-  it('lists every contact link and the texture credit in the footer', () => {
-    useSceneStore.setState({ renderTier: 'static' })
+  it('shows the card once the dialogue is skipped', () => {
+    renderLayout('/about')
+    fireEvent.click(screen.getByRole('button', { name: 'skip' }))
+    expect(screen.getByText('about content')).toBeInTheDocument()
+  })
+
+  it('lists every contact link in the footer', () => {
+    useRoomStore.setState({ entered: true })
     renderLayout()
     expect(screen.getByRole('link', { name: 'fujita.natsuo@gmail.com' })).toHaveAttribute(
       'href',
       'mailto:fujita.natsuo@gmail.com',
     )
-    expect(screen.getByRole('link', { name: 'natsuo001@e.ntu.edu.sg' })).toHaveAttribute(
-      'href',
-      'mailto:natsuo001@e.ntu.edu.sg',
-    )
+    expect(screen.getByRole('link', { name: 'natsuo001@e.ntu.edu.sg' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute(
       'href',
       'https://www.linkedin.com/in/natsuo-fujita',
     )
     expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /Solar System Scope/ })).toBeInTheDocument()
   })
 
-  it('steps to the first planet on a wheel once booted', () => {
-    useSceneStore.setState({ renderTier: 'static' })
+  it('steps to the first section on a wheel once inside', () => {
+    useRoomStore.setState({ entered: true })
     renderLayout()
-    expect(screen.getByText('home content')).toBeInTheDocument()
-    // The wheel lands on the scene layer, outside the content card.
-    fireEvent.wheel(document.querySelector('.scene-layer'), { deltaY: 120 })
-    expect(useSceneStore.getState().activeSlug).toBe('mercury')
-  })
-
-  it('mirrors the URL into activeSlug', () => {
-    useSceneStore.setState({ renderTier: 'static' })
-    renderLayout('/about')
-    expect(useSceneStore.getState().activeSlug).toBe('about')
+    fireEvent.wheel(screen.getByTestId('room'), { deltaY: 120 })
+    expect(useRoomStore.getState().activeSlug).toBe('about')
   })
 })

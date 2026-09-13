@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import App from './App.jsx'
-import { pages } from './content/site.js'
+import { sections } from './content/site.js'
 
 vi.mock('./components/Layout.jsx', async () => {
   const { Outlet } = await import('react-router-dom')
@@ -10,7 +10,7 @@ vi.mock('./components/Layout.jsx', async () => {
 })
 
 describe('routes', () => {
-  it.each(pages.map((p) => [p.slug, p.label]))('/%s renders its page heading', (slug, label) => {
+  it.each(sections.map((s) => [s.slug, s.label]))('/%s renders its card heading', (slug, label) => {
     render(
       <MemoryRouter initialEntries={[`/${slug}`]}>
         <App />

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { pages, person } from '../content/site.js'
+import { person, sections } from '../content/site.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
 export default function Home() {
@@ -20,20 +20,16 @@ export default function Home() {
         </a>
       </div>
 
-      <nav className="contents" aria-label="Contents">
-        <p className="contents__title">Explore</p>
+      <nav className="contents" aria-label="Sections">
+        <p className="contents__title">Look around</p>
         <ul className="contents__list">
-          {pages
-            .filter((page) => page.sections.length > 0)
-            .map((page, i) => (
-              <li className="contents__item" key={page.slug} style={{ '--i': i }}>
-                <Link to={page.slug} className="contents__link">
-                  <span className="contents__label">{page.label}</span>
-                  <span className="contents__leader" aria-hidden="true" />
-                  <span className="contents__blurb">{page.planetName}</span>
-                </Link>
-              </li>
-            ))}
+          {sections.map((section, i) => (
+            <li className="contents__item" key={section.slug} style={{ '--i': i }}>
+              <Link to={section.slug} className="contents__link">
+                {section.label}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
     </section>

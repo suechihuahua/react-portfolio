@@ -4,11 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import { Analytics } from '@vercel/analytics/react'
 import './index.css'
 import App from './App.jsx'
-import { useSceneStore } from './store/useSceneStore.js'
-
-if (useSceneStore.getState().renderTier !== 'static') {
-  import('./components/three/Scene.jsx')
-}
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

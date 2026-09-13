@@ -1,22 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Site content lives here. Every entry in `pages` is one planet, in solar
-// order. A page with `sections` renders them in the content card; a page with
-// no sections shows the "in development" placeholder. Each page gets:
-//   • a link in the HUD nav (by planet name)
-//   • a planet in the 3D scene (textured by `planet`)
-//   • its own route at /<slug>
-//
-// Section `kind`s (see src/components/Page.jsx):
-//   • "prose"    – one or more paragraphs (default)
-//   • "list"     – grouped bullet lists, e.g. skills
-//   • "courses"  – a term-by-term course table
-//   • "projects" – ruled project entries
+// Site content. Each entry in `sections` is one spot in the room:
+//   • spot   – where the camera looks: x/y in % of the room image, zoom factor
+//   • avatar – where the pose sprite stands: bottom-centre x/y in %, height in
+//              % of the room height
+//   • pose   – which cut-out from public/room/pose-<pose>.png
+//   • lines  – what he says in the dialogue box before the card appears
+//   • blocks – the card content (see src/components/SectionCard.jsx for kinds:
+//              prose, list, timeline, projects)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const person = {
   name: 'Natsuo Fujita',
-  tagline:
-    'Computer science student. I like understanding how systems work — and how they break.',
+  tagline: 'Computer science student at NTU. I like understanding how systems work — and how they break.',
   email: 'fujita.natsuo@gmail.com',
   ntuEmail: 'natsuo001@e.ntu.edu.sg',
   github: 'https://github.com/suechihuahua',
@@ -24,71 +19,92 @@ export const person = {
   resume: '/resume.pdf',
 }
 
-export const textureCredit = {
-  label: 'Planet textures: Solar System Scope (CC BY 4.0)',
-  href: 'https://www.solarsystemscope.com/textures/',
+export const ROOM_IMAGE = { src: '/room/room.jpg', width: 3072, height: 880 }
+
+// Idle state: sitting at the PC, camera wide on the desk side.
+export const home = {
+  spot: { x: 60, y: 52, zoom: 1.05 },
+  avatar: { x: 63.5, y: 97, height: 66 },
+  pose: 'pc',
 }
 
-export const pages = [
-  { slug: 'mercury', planet: 'mercury', planetName: 'Mercury', label: 'Mercury', sections: [] },
-  { slug: 'venus', planet: 'venus', planetName: 'Venus', label: 'Venus', sections: [] },
+export const sections = [
   {
     slug: 'about',
-    planet: 'earth',
-    planetName: 'Earth',
     label: 'About me',
-    blurb: 'who I am',
-    sections: [
+    pose: 'about',
+    spot: { x: 52, y: 60, zoom: 1.32 },
+    avatar: { x: 52, y: 99, height: 70 },
+    lines: [
+      "Hi, I'm Natsuo Fujita.",
+      'Computer Science undergraduate at Nanyang Technological University, class of 2029.',
+      'I like taking things apart to see how they work — and building things from the ground up.',
+      'Have a look around my room.',
+    ],
+    blocks: [
       {
         kind: 'prose',
-        heading: 'Hello',
         paragraphs: [
-          "I'm Natsuo, a computer science student drawn to cybersecurity and to building things from the ground up.",
-          'Most of what I enjoy comes back to the same question: how does this actually work, and what happens when it doesn’t? Away from a keyboard I train at the gym and keep a long list of dramas and anime.',
+          'Singapore-based, currently in my first year of the Bachelor of Computing (Computer Science) at NTU after completing National Service.',
+          'Most of what I enjoy comes back to the same question: how does this actually work, and what happens when it doesn’t?',
         ],
       },
       {
         kind: 'list',
-        heading: 'What I work with',
-        groups: [
-          { name: 'Languages', items: ['Python', 'C++', 'C', 'JavaScript'] },
-          { name: 'Learning now', items: ['React', 'Web development'] },
+        heading: 'Languages',
+        groups: [{ name: 'Spoken', items: ['English', 'Chinese', 'Japanese (conversational)'] }],
+      },
+    ],
+  },
+  {
+    slug: 'education',
+    label: 'Education',
+    pose: 'education',
+    spot: { x: 44, y: 58, zoom: 1.32 },
+    avatar: { x: 47, y: 99, height: 70 },
+    lines: ['This is where the studying happens.', 'NTU for computer science, after A-levels at Tampines Meridian.'],
+    blocks: [
+      {
+        kind: 'timeline',
+        items: [
           {
-            name: 'Focus areas',
-            items: ['Cybersecurity', 'Systems programming', 'How things break'],
+            title: 'Nanyang Technological University, Singapore',
+            subtitle: 'Bachelor of Computing (Computer Science)',
+            period: 'Aug 2025 – May 2029',
+          },
+          {
+            title: 'Tampines Meridian Junior College',
+            subtitle: "GCE 'A' Levels",
+            period: 'Jan 2021 – Nov 2022',
           },
         ],
       },
     ],
   },
   {
-    slug: 'courses',
-    planet: 'mars',
-    planetName: 'Mars',
-    label: 'Courses taken',
-    blurb: 'what I’ve studied',
-    sections: [
+    slug: 'work',
+    label: 'Work experience',
+    pose: 'work',
+    spot: { x: 71, y: 58, zoom: 1.32 },
+    avatar: { x: 74, y: 99, height: 70 },
+    lines: ['Two years of National Service taught me a lot about keeping things running.', 'Before that, I worked the kitchen and the till at Tori-Q.'],
+    blocks: [
       {
-        kind: 'prose',
-        paragraphs: ['Coursework so far, grouped by term. This fills in as I go.'],
-      },
-      {
-        kind: 'courses',
-        terms: [
+        kind: 'timeline',
+        items: [
           {
-            name: 'Year 1',
-            courses: [
-              { code: 'CS 101', title: 'Introduction to Programming' },
-              { code: 'CS 102', title: 'Data Structures' },
-              { code: 'MATH 135', title: 'Discrete Mathematics' },
-            ],
+            title: 'Supply Base East',
+            subtitle: 'National Serviceman (full-time)',
+            period: 'Jul 2023 – Jul 2025',
+            points: ['In charge of camp passes and clearance', 'Mastered Microsoft Excel and Outlook for daily operations'],
           },
           {
-            name: 'Year 2',
-            courses: [
-              { code: 'CS 240', title: 'Algorithms' },
-              { code: 'CS 251', title: 'Computer Organization' },
-              { code: 'CS 341', title: 'Operating Systems' },
+            title: 'Tori-Q',
+            subtitle: 'Catering and customer service (part-time)',
+            period: 'Jan 2023 – Jun 2023',
+            points: [
+              'Prepared and cooked food in the kitchen; obtained Food & Hygiene certification',
+              'Handled cashiering and customer inquiries',
             ],
           },
         ],
@@ -97,33 +113,75 @@ export const pages = [
   },
   {
     slug: 'projects',
-    planet: 'jupiter',
-    planetName: 'Jupiter',
     label: 'Projects',
-    blurb: 'what I’ve built',
-    sections: [
+    pose: 'pc',
+    spot: { x: 68, y: 55, zoom: 1.4 },
+    avatar: { x: 63.5, y: 97, height: 66 },
+    lines: ['This is where I build things.', 'Latest: a Roblox game with my team for the Garena Hackathon — and this room you are standing in.'],
+    blocks: [
       {
         kind: 'projects',
         items: [
           {
-            title: 'This portfolio',
-            year: '2026',
-            description:
-              'A small React site, config-driven so new pages and sections are one object each.',
-            link: 'https://github.com/suechihuahua/react-portfolio',
+            title: 'Garena Hackathon 2026',
+            year: 'Feb – Mar 2026',
+            description: 'Brainstormed and developed a Roblox game with a team at NTU.',
           },
           {
-            title: 'More soon',
-            description:
-              'Class projects and security write-ups will land here as they’re ready.',
+            title: 'This portfolio',
+            year: '2026',
+            description: 'An illustrated, interactive room built with React and Vite — every section is a spot in the room.',
+            link: 'https://github.com/suechihuahua/react-portfolio',
           },
         ],
       },
     ],
   },
-  { slug: 'saturn', planet: 'saturn', planetName: 'Saturn', label: 'Saturn', sections: [] },
-  { slug: 'uranus', planet: 'uranus', planetName: 'Uranus', label: 'Uranus', sections: [] },
-  { slug: 'neptune', planet: 'neptune', planetName: 'Neptune', label: 'Neptune', sections: [] },
+  {
+    slug: 'skills',
+    label: 'Skills',
+    pose: 'skills',
+    spot: { x: 56, y: 58, zoom: 1.32 },
+    avatar: { x: 56.5, y: 99, height: 70 },
+    lines: ['The toolbox so far.', 'Python, C, C++ and Java for the most part — Git and the web on the side.'],
+    blocks: [
+      {
+        kind: 'list',
+        groups: [
+          { name: 'Programming', items: ['Python', 'C', 'C++', 'Java', 'JavaScript', 'HTML'] },
+          { name: 'Tools', items: ['Git', 'Microsoft Office', 'React (learning)'] },
+          { name: 'Interests', items: ['Cybersecurity', 'Systems programming'] },
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'hobbies',
+    label: 'Hobbies',
+    pose: 'hobbies',
+    spot: { x: 23, y: 62, zoom: 1.5 },
+    avatar: { x: 24, y: 99, height: 62 },
+    lines: ['When the work is done: games, the gym, and a very long anime backlog.', 'I was vice-captain of the basketball team — still play when I can.'],
+    blocks: [
+      {
+        kind: 'list',
+        groups: [
+          { name: 'Sport', items: ['Basketball (vice-captain)', 'Gym'] },
+          { name: 'Screen', items: ['Anime', 'Drama', 'Gaming'] },
+          { name: 'Making', items: ['Building projects'] },
+        ],
+      },
+      {
+        kind: 'prose',
+        heading: 'Basketball vice-captain',
+        paragraphs: [
+          'Led pre-training routines and on-court preparation, supported teammates, and acted as the bridge between players and the coaching staff.',
+        ],
+      },
+    ],
+  },
 ]
 
-export const pageBySlug = Object.fromEntries(pages.map((p) => [p.slug, p]))
+export const sectionBySlug = Object.fromEntries(sections.map((s) => [s.slug, s]))
+
+export const routeOrder = ['/', ...sections.map((s) => `/${s.slug}`)]

@@ -1,6 +1,6 @@
 # Natsuo Fujita — portfolio
 
-Interactive 3D portfolio: a cyber solar system where each section is a planet. Built with React 19, Vite, React Three Fiber, and react-router.
+An illustrated, interactive room. A door opens on black; inside, each section of the portfolio is a spot in the room and a pose of the avatar — click him and he changes into a suit and introduces himself; the bookshelf, desk, poster wall and bed hold education, work, projects, skills and hobbies. Built with React 19, Vite, react-router, framer-motion and zustand — no WebGL.
 
 ## Develop
 
@@ -9,19 +9,21 @@ npm install
 npm run dev          # http://localhost:5173
 npm test             # Vitest
 npm run lint
-npm run check:bundle # build + assert three.js is not in the initial chunk
-npm run capture      # regenerate public/hero-poster.jpg, og.png, favicons
+npm run check:bundle # build + keep the initial JS under budget
+npm run art          # slice art/sheet.png into public/room (room + six poses)
+npm run capture      # regenerate public/room-poster.jpg, og.png, favicons
 npm run screenshots  # 375/768/1440 screenshots + overflow check
-npm run textures     # re-download + downsize the planet textures into public/textures
 ```
 
-Force a render tier for testing: `/?tier=full`, `/?tier=lite`, `/?tier=static`.
+Add `?capture` to the URL to render the room alone (no door, menu or cards).
 
 ## Content
 
-Everything on the site comes from `src/content/site.js`. `pages` lists the eight planets in solar order; give one `sections` and it becomes a content page (Earth = About me, Mars = Courses, Jupiter = Projects today), leave `sections` empty and it shows "in development...". Scrolling or swiping outside the content card moves to the next planet. `public/resume.pdf` is the downloadable résumé — replace the file and nothing else needs to change.
+Everything comes from `src/content/site.js`. Each entry in `sections` is one spot: `spot` (where the camera looks, in % of the room image, plus zoom), `avatar` (where the pose stands), `pose`, `lines` (the dialogue) and `blocks` (the card: prose, list, timeline, projects). `public/resume.pdf` is the downloadable résumé — replace the file and nothing else needs to change.
 
-Planet, sun, moon and Milky Way textures come from [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0); `npm run textures` downloads and downsizes them.
+## Art
+
+`art/sheet.png` is the generated sheet: the room on top and six poses on painted checkerboards. `npm run art` crops the panels, keys out the checkerboards (edge flood-fill, enclosed-pocket detection, one-pixel defringe — see `scripts/keying.mjs`) and writes `public/room/`. Re-run it after replacing the sheet; adjust the panel rectangles at the top of `scripts/slice-art.mjs` if the layout changes.
 
 ## Deploy (Vercel)
 
@@ -31,3 +33,5 @@ Planet, sun, moon and Milky Way textures come from [Solar System Scope](https://
 4. Custom domain (optional): **Settings → Domains → Add**, enter the domain, then at your registrar add the records Vercel shows (an `A` record to `76.76.21.21` for the apex, or a `CNAME` to `cname.vercel-dns.com` for `www`). Afterwards update the `canonical` / `og:url` / `og:image` URLs in `index.html`.
 
 Client-side routes work on refresh because `vercel.json` rewrites every path to `index.html`.
+
+The previous version of this site — a textured 3D solar system — is kept under `archive/solar-system/` and at the git tag `solar-system-v1`.

@@ -4,10 +4,10 @@ import { MemoryRouter } from 'react-router-dom'
 import Home from './Home.jsx'
 import HUD from './HUD.jsx'
 import { person } from '../content/site.js'
-import { useSceneStore } from '../store/useSceneStore.js'
+import { useRoomStore } from '../store/useRoomStore.js'
 
 describe('resume download', () => {
-  beforeEach(() => useSceneStore.setState({ activeSlug: null, simpleView: false }))
+  beforeEach(() => useRoomStore.setState({ activeSlug: null, voiceOn: false }))
 
   it.each([
     ['Home', Home],
