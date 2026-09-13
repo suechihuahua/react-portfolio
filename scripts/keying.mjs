@@ -92,8 +92,8 @@ function isBimodal(data, component) {
   let grey = 0
   for (const p of component) {
     const g = data[p * 4 + 1]
-    if (g >= 249) white += 1
-    else if (g >= 222 && g <= 246) grey += 1
+    if (g >= 247) white += 1
+    else if (g >= 218 && g <= 246) grey += 1
   }
   const n = component.length
   return white / n >= 0.2 && grey / n >= 0.2 && (white + grey) / n >= 0.75
@@ -117,6 +117,73 @@ export function defringe(data, width, height) {
     }
   }
   for (const i of fringe) data[i + 3] = 0
+  return data
+}
+
+// Applies a lower-resolution alpha mask to a `factor`x larger image: light
+// checker-toned pixels whose source pixel (or any of its 8 neighbours) was
+// cleared in the mask are cleared here too. Lets pocket detection run on the
+// crisp original and still govern the upscaled copy.
+export function clearWhereMaskClear(data, width, height, mask, maskWidth, maskHeight, factor) {
+  const maskClearNear = (mx, my) => {
+    for (let dy = -1; dy <= 1; dy += 1) {
+      for (let dx = -1; dx <= 1; dx += 1) {
+        const x = mx + dx
+        const y = my + dy
+        if (x < 0 || y < 0 || x >= maskWidth || y >= maskHeight) continue
+        if (mask[(y * maskWidth + x) * 4 + 3] === 0) return true
+      }
+    }
+    return false
+  }
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 4
+      if (data[i + 3] === 0 || !isCheckerPixel(data, i)) continue
+      if (maskClearNear(Math.floor(x / factor), Math.floor(y / factor))) data[i + 3] = 0
+    }
+  }
+  return data
+}
+
+// Drops isolated opaque blobs much smaller than the largest one (upscaler
+// noise, stray checker fragments); the character itself is one big component.
+export function removeSpecks(data, width, height, { keepRatio = 0.01 } = {}) {
+  const seen = new Uint8Array(width * height)
+  const components = []
+  for (let start = 0; start < width * height; start += 1) {
+    if (seen[start] || data[start * 4 + 3] === 0) continue
+    const component = []
+    const stack = [start]
+    seen[start] = 1
+    while (stack.length) {
+      const p = stack.pop()
+      component.push(p)
+      const x = p % width
+      const y = (p - x) / width
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = x + dx
+        const ny = y + dy
+        if (nx < 0 || ny < 0 || nx >= width || ny >= height) continue
+        const q = ny * width + nx
+        if (seen[q] || data[q * 4 + 3] === 0) continue
+        seen[q] = 1
+        stack.push(q)
+      }
+    }
+    components.push(component)
+  }
+  const largest = Math.max(0, ...components.map((c) => c.length))
+  for (const component of components) {
+    if (component.length < largest * keepRatio) {
+      for (const p of component) data[p * 4 + 3] = 0
+    }
+  }
   return data
 }
 

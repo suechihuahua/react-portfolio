@@ -3,6 +3,8 @@ import {
   keyOutCheckerboard,
   keyOutEnclosedCheckers,
   defringe,
+  removeSpecks,
+  clearWhereMaskClear,
   opaqueBounds,
   isCheckerPixel,
 } from './keying.mjs'
@@ -102,6 +104,40 @@ describe('keyOutCheckerboard', () => {
     defringe(data, W, H)
     expect(data[(9 * W + 15) * 4 + 3]).toBe(0) // halo gone
     expect(data[(10 * W + 15) * 4 + 3]).toBe(255) // dark edge kept
+  })
+
+  it('removeSpecks clears tiny stray blobs but keeps the character', () => {
+    const speckled = (x, y) => {
+      if (x >= 10 && x < 30 && y >= 8 && y < 34) return [40, 30, 30]
+      if (x === 3 && y === 3) return [90, 60, 60] // a one-pixel speck
+      return null
+    }
+    const data = keyOutCheckerboard(makeImage(W, H, speckled), W, H)
+    expect(data[(3 * W + 3) * 4 + 3]).toBe(255)
+    removeSpecks(data, W, H)
+    expect(data[(3 * W + 3) * 4 + 3]).toBe(0)
+    expect(opaqueBounds(data, W, H)).toEqual({ x: 10, y: 8, width: 20, height: 26 })
+  })
+
+  it('clearWhereMaskClear projects a cleared low-res pocket onto the large image', () => {
+    // 2x image: a light pocket at (4..7, 4..7) and a dark pixel next to it.
+    const big = makeImage(16, 16, (x, y) => {
+      if (x >= 4 && x < 8 && y >= 4 && y < 8) return [240, 240, 240]
+      if (x === 9 && y === 5) return [40, 30, 30]
+      return null
+    })
+    keyOutCheckerboard(big, 16, 16)
+    // 1x mask: fully opaque except the pocket area (2..3, 2..3).
+    const mask = new Uint8ClampedArray(8 * 8 * 4).fill(255)
+    for (const [x, y] of [
+      [2, 2],
+      [3, 2],
+      [2, 3],
+      [3, 3],
+    ]) mask[(y * 8 + x) * 4 + 3] = 0
+    clearWhereMaskClear(big, 16, 16, mask, 8, 8, 2)
+    expect(big[(5 * 16 + 5) * 4 + 3]).toBe(0) // pocket cleared
+    expect(big[(5 * 16 + 9) * 4 + 3]).toBe(255) // dark pixel untouched
   })
 
   it('returns null bounds for a fully keyed image', () => {

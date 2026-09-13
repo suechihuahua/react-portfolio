@@ -23,7 +23,13 @@ Everything comes from `src/content/site.js`. Each entry in `sections` is one spo
 
 ## Art
 
-`art/sheet.png` is the generated sheet: the room on top and six poses on painted checkerboards. `npm run art` crops the panels, keys out the checkerboards (edge flood-fill, enclosed-pocket detection, one-pixel defringe — see `scripts/keying.mjs`) and writes `public/room/`. Re-run it after replacing the sheet; adjust the panel rectangles at the top of `scripts/slice-art.mjs` if the layout changes.
+`art/sheet.png` is the generated sheet: the room on top and six poses on painted checkerboards. For crisp output, first upscale it 4× with [Real-ESRGAN](https://github.com/xinntao/Real-ESRGAN/releases) (the `realesrgan-ncnn-vulkan` Windows build):
+
+```bash
+realesrgan-ncnn-vulkan.exe -i art/sheet.png -o art/sheet-4x.png -n realesrgan-x4plus-anime -s 4
+```
+
+`npm run art` then uses `art/sheet-4x.png` when present (falling back to the original), crops the panels, keys out the checkerboards (edge flood-fill, enclosed-pocket detection, defringe — see `scripts/keying.mjs`) and writes `public/room/`: the room at 4096 px wide and each pose at 3× its panel size. Adjust the panel rectangles at the top of `scripts/slice-art.mjs` if the sheet layout changes.
 
 ## Deploy (Vercel)
 

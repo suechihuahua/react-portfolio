@@ -1,11 +1,21 @@
-// Slices art/sheet.png (room panel on top, six pose panels on painted
-// checkerboards below) into public/room/. Run with: npm run art
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+// Slices the generated art sheet (room panel on top, six pose panels on
+// painted checkerboards below) into public/room/. Run with: npm run art
+//
+// Uses art/sheet-4x.png (the sheet upscaled 4x with Real-ESRGAN's anime model,
+// see README) when it exists, otherwise the original art/sheet.png. Panel
+// rectangles are given in the original 1536x1024 coordinates and scaled.
+// Checkerboard pockets are detected on the crisp original (where the two
+// tones are flat) and projected onto the upscaled copy.
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { chromium } from 'playwright'
 
-const SHEET = 'art/sheet.png'
+const ORIGINAL = 'art/sheet.png'
+const ORIGINAL_WIDTH = 1536
+const UPSCALED = 'art/sheet-4x.png'
+const SHEET = existsSync(UPSCALED) ? UPSCALED : ORIGINAL
 const OUT = 'public/room'
-const ROOM = { x: 0, y: 0, w: 1536, h: 440, scale: 2 }
+const ROOM = { x: 0, y: 0, w: 1536, h: 440, outWidth: 4096 }
+const POSE_OUT_SCALE = 3 // pose files are 3x the original panel size
 const POSES = {
   pc: { x: 14, y: 446, w: 282, h: 490 },
   about: { x: 302, y: 446, w: 216, h: 490 },
@@ -15,8 +25,12 @@ const POSES = {
   hobbies: { x: 1248, y: 446, w: 274, h: 490 },
 }
 
+const toDataUrl = (file) => `data:image/png;base64,${readFileSync(file).toString('base64')}`
+const sheetBytes = readFileSync(SHEET)
+const factor = sheetBytes.readUInt32BE(16) / ORIGINAL_WIDTH
+console.log(`slicing ${SHEET} (${factor}x)`)
+
 const keyingSource = readFileSync('scripts/keying.mjs', 'utf8').replace(/^export /gm, '')
-const sheetDataUrl = `data:image/png;base64,${readFileSync(SHEET).toString('base64')}`
 
 mkdirSync(OUT, { recursive: true })
 const browser = await chromium.launch()
@@ -24,63 +38,87 @@ try {
   const page = await browser.newPage()
   await page.setContent('<canvas id="c"></canvas>')
   await page.evaluate(
-    ({ src, keying }) =>
-      new Promise((resolve, reject) => {
-        const fns = new Function(
-          `${keying}; return { keyOutCheckerboard, keyOutEnclosedCheckers, defringe, opaqueBounds }`,
-        )()
-        Object.assign(window, fns)
-        const img = new Image()
-        img.onload = () => {
-          window.sheet = img
-          resolve()
-        }
-        img.onerror = reject
-        img.src = src
-      }),
-    { src: sheetDataUrl, keying: keyingSource },
+    ({ big, original, keying }) => {
+      const fns = new Function(
+        `${keying}; return { keyOutCheckerboard, keyOutEnclosedCheckers, defringe, removeSpecks, clearWhereMaskClear, opaqueBounds }`,
+      )()
+      Object.assign(window, fns)
+      const load = (src) =>
+        new Promise((resolve, reject) => {
+          const img = new Image()
+          img.onload = () => resolve(img)
+          img.onerror = reject
+          img.src = src
+        })
+      return Promise.all([load(big), load(original)]).then(([sheet, sheetOriginal]) => {
+        window.sheet = sheet
+        window.sheetOriginal = sheetOriginal
+      })
+    },
+    { big: toDataUrl(SHEET), original: toDataUrl(ORIGINAL), keying: keyingSource },
   )
 
-  const room = await page.evaluate(({ x, y, w, h, scale }) => {
-    const canvas = document.createElement('canvas')
-    canvas.width = w * scale
-    canvas.height = h * scale
-    const ctx = canvas.getContext('2d')
-    ctx.imageSmoothingQuality = 'high'
-    ctx.drawImage(window.sheet, x, y, w, h, 0, 0, canvas.width, canvas.height)
-    return canvas.toDataURL('image/jpeg', 0.88)
-  }, ROOM)
-  writeFileSync(`${OUT}/room.jpg`, Buffer.from(room.split(',')[1], 'base64'))
-  console.log(`room.jpg ${ROOM.w * ROOM.scale}x${ROOM.h * ROOM.scale}`)
-
-  const manifest = {}
-  for (const [name, rect] of Object.entries(POSES)) {
-    const result = await page.evaluate((r) => {
+  const room = await page.evaluate(
+    ({ x, y, w, h, outWidth, factor }) => {
       const canvas = document.createElement('canvas')
-      canvas.width = r.w
-      canvas.height = r.h
+      canvas.width = outWidth
+      canvas.height = Math.round((h / w) * outWidth)
       const ctx = canvas.getContext('2d')
-      ctx.drawImage(window.sheet, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h)
-      const image = ctx.getImageData(0, 0, r.w, r.h)
-      window.keyOutCheckerboard(image.data, r.w, r.h)
-      window.keyOutEnclosedCheckers(image.data, r.w, r.h)
-      window.defringe(image.data, r.w, r.h)
-      window.defringe(image.data, r.w, r.h)
-      const bounds = window.opaqueBounds(image.data, r.w, r.h)
-      if (!bounds) return null
-      const trimmed = document.createElement('canvas')
-      trimmed.width = bounds.width
-      trimmed.height = bounds.height
-      ctx.putImageData(image, 0, 0)
-      trimmed
-        .getContext('2d')
-        .drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height)
-      return { bounds, png: trimmed.toDataURL('image/png') }
-    }, rect)
+      ctx.imageSmoothingQuality = 'high'
+      ctx.drawImage(window.sheet, x * factor, y * factor, w * factor, h * factor, 0, 0, canvas.width, canvas.height)
+      return { jpg: canvas.toDataURL('image/jpeg', 0.86), width: canvas.width, height: canvas.height }
+    },
+    { ...ROOM, factor },
+  )
+  writeFileSync(`${OUT}/room.jpg`, Buffer.from(room.jpg.split(',')[1], 'base64'))
+  console.log(`room.jpg ${room.width}x${room.height}`)
+
+  const manifest = { room: { width: room.width, height: room.height } }
+  for (const [name, rect] of Object.entries(POSES)) {
+    const result = await page.evaluate(
+      ({ r, factor, outScale }) => {
+        // 1x mask: edge fill + pocket detection on the crisp original.
+        const maskCanvas = document.createElement('canvas')
+        maskCanvas.width = r.w
+        maskCanvas.height = r.h
+        const mctx = maskCanvas.getContext('2d')
+        mctx.drawImage(window.sheetOriginal, r.x, r.y, r.w, r.h, 0, 0, r.w, r.h)
+        const mask = mctx.getImageData(0, 0, r.w, r.h).data
+        window.keyOutCheckerboard(mask, r.w, r.h)
+        window.keyOutEnclosedCheckers(mask, r.w, r.h)
+
+        const w = Math.round(r.w * factor)
+        const h = Math.round(r.h * factor)
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(window.sheet, r.x * factor, r.y * factor, w, h, 0, 0, w, h)
+        const image = ctx.getImageData(0, 0, w, h)
+        window.keyOutCheckerboard(image.data, w, h)
+        if (factor > 1) window.clearWhereMaskClear(image.data, w, h, mask, r.w, r.h, factor)
+        else window.keyOutEnclosedCheckers(image.data, w, h)
+        for (let i = 0; i < Math.ceil(factor / 2); i += 1) window.defringe(image.data, w, h)
+        window.removeSpecks(image.data, w, h)
+        const bounds = window.opaqueBounds(image.data, w, h)
+        if (!bounds) return null
+        ctx.putImageData(image, 0, 0)
+
+        const scale = outScale / factor
+        const trimmed = document.createElement('canvas')
+        trimmed.width = Math.round(bounds.width * scale)
+        trimmed.height = Math.round(bounds.height * scale)
+        const tctx = trimmed.getContext('2d')
+        tctx.imageSmoothingQuality = 'high'
+        tctx.drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, trimmed.width, trimmed.height)
+        return { width: trimmed.width, height: trimmed.height, png: trimmed.toDataURL('image/png') }
+      },
+      { r: rect, factor, outScale: POSE_OUT_SCALE },
+    )
     if (!result) throw new Error(`${name}: nothing left after keying`)
     writeFileSync(`${OUT}/pose-${name}.png`, Buffer.from(result.png.split(',')[1], 'base64'))
-    manifest[name] = { src: `/room/pose-${name}.png`, ...result.bounds, panel: rect }
-    console.log(`pose-${name}.png ${result.bounds.width}x${result.bounds.height}`)
+    manifest[name] = { src: `/room/pose-${name}.png`, width: result.width, height: result.height }
+    console.log(`pose-${name}.png ${result.width}x${result.height}`)
   }
   writeFileSync(`${OUT}/poses.json`, `${JSON.stringify(manifest, null, 2)}\n`)
 } finally {

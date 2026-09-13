@@ -19,7 +19,7 @@ export const person = {
   resume: '/resume.pdf',
 }
 
-export const ROOM_IMAGE = { src: '/room/room.jpg', width: 3072, height: 880 }
+export const ROOM_IMAGE = { src: '/room/room.jpg', width: 4096, height: 1173 }
 
 // Idle state: sitting at the PC, camera wide on the desk side.
 export const home = {
