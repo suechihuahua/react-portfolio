@@ -19,6 +19,7 @@ export const person = {
     'Computer science student. I like understanding how systems work — and how they break.',
   email: 'fujita.natsuo@gmail.com',
   github: 'https://github.com/suechihuahua',
+  resume: '/resume.pdf',
 }
 
 export const pages = [

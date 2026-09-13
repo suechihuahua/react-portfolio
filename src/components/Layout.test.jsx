@@ -1,5 +1,5 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, cleanup } from '@testing-library/react'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
 import { useSceneStore } from '../store/useSceneStore.js'
@@ -30,10 +30,6 @@ describe('Layout', () => {
       flyProgress: 1,
       renderTier: 'lite',
     })
-  })
-
-  afterEach(() => {
-    cleanup()
   })
 
   it('shows the boot screen and mounts the scene on 3D tiers', async () => {

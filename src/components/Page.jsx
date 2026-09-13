@@ -1,5 +1,7 @@
 // Renders a page from its config. Add a new `kind` here and it's available to
 // every page in src/content/site.js.
+import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
+import { person } from '../content/site.js'
 
 function Prose({ section }) {
   return (
@@ -100,6 +102,8 @@ const RENDERERS = {
 }
 
 export default function Page({ page }) {
+  useDocumentTitle(`${person.name} — ${page.label}`)
+
   return (
     <article className="entry">
       <header className="entry__header">

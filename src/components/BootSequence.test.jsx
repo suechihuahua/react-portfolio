@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, act, cleanup } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import BootSequence from './BootSequence.jsx'
 import { useSceneStore } from '../store/useSceneStore.js'
 
@@ -10,7 +10,6 @@ describe('BootSequence', () => {
   })
 
   afterEach(() => {
-    cleanup()
     vi.useRealTimers()
   })
 
