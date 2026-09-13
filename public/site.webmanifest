@@ -1,0 +1,8 @@
+{
+  "name": "Natsuo Fujita — portfolio",
+  "short_name": "Natsuo Fujita",
+  "icons": [{ "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }],
+  "theme_color": "#06040c",
+  "background_color": "#06040c",
+  "display": "standalone"
+}

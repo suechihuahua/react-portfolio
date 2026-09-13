@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=IBM+Plex+Mono:wght@400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+      body {
+        background: #06040c url('/hero-poster.jpg') center / cover no-repeat;
+        color: #e6e9f2;
+        font-family: 'Fraunces', Georgia, serif;
+        position: relative;
+      }
+      .shade { position: absolute; inset: 0; background: linear-gradient(to right, rgba(6,4,12,0.85) 0%, rgba(6,4,12,0.2) 70%); }
+      .copy { position: absolute; left: 72px; bottom: 72px; max-width: 760px; }
+      .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 22px; color: #4df1ff; margin-bottom: 14px; }
+      h1 { font-size: 88px; line-height: 1; margin: 0 0 18px; font-weight: 500; }
+      p { font-size: 28px; line-height: 1.35; margin: 0; color: #c9cdda; }
+    </style>
+  </head>
+  <body>
+    <div class="shade"></div>
+    <div class="copy">
+      <div class="kicker">// portfolio</div>
+      <h1>Natsuo Fujita</h1>
+      <p>Computer science student. I like understanding how systems work — and how they break.</p>
+    </div>
+  </body>
+</html>
