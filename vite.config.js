@@ -7,9 +7,8 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (/node_modules[\\/](three|@react-three|postprocessing|maath|gsap)[\\/]/.test(id)) {
-            return 'vendor-three'
-          }
+          if (/node_modules[\\/](three|@react-three|postprocessing|maath|gsap)[\\/]/.test(id)) return 'vendor-three'
+          if (/node_modules[\\/]/.test(id)) return 'vendor'
         },
       },
     },
