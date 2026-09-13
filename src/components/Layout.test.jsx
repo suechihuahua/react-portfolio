@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
 import { useSceneStore } from '../store/useSceneStore.js'
@@ -45,6 +45,17 @@ describe('Layout', () => {
     expect(screen.queryByRole('button', { name: /loading scene/ })).not.toBeInTheDocument()
     expect(document.querySelector('img.static-hero')).not.toBeNull()
     expect(screen.getByText('home content')).toBeInTheDocument()
+  })
+
+  it('reveals the pane on the static tier even with flyProgress stuck at 0', async () => {
+    // The static tier has no camera flight, so a flyProgress left over from an
+    // interrupted flight must not keep the pane hidden.
+    useSceneStore.setState({ renderTier: 'static', flyProgress: 0 })
+    renderLayout()
+    expect(screen.getByText('home content')).toBeInTheDocument()
+    const pane = document.getElementById('overlay-content')
+    expect(pane).not.toBeNull()
+    await waitFor(() => expect(pane.style.opacity).not.toBe('0'))
   })
 
   it('mirrors the URL into activeSlug', () => {
