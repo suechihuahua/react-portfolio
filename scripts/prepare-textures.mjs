@@ -6,15 +6,17 @@ import { chromium } from 'playwright'
 const SOURCE = 'https://www.solarsystemscope.com/textures/download/'
 const OUT_DIR = 'public/textures'
 
+// 2k for the bodies the camera parks close to (sun, Earth, Jupiter, Saturn);
+// 1k is plenty for the rest, which stay small on screen.
 const TEXTURES = [
-  { file: '2k_sun.jpg', out: 'sun.jpg', width: 1024 },
+  { file: '2k_sun.jpg', out: 'sun.jpg', width: 2048 },
   { file: '2k_mercury.jpg', out: 'mercury.jpg', width: 1024 },
   { file: '2k_venus_atmosphere.jpg', out: 'venus.jpg', width: 1024 },
-  { file: '2k_earth_daymap.jpg', out: 'earth.jpg', width: 1024 },
+  { file: '2k_earth_daymap.jpg', out: 'earth.jpg', width: 2048 },
   { file: '2k_moon.jpg', out: 'moon.jpg', width: 512 },
   { file: '2k_mars.jpg', out: 'mars.jpg', width: 1024 },
-  { file: '2k_jupiter.jpg', out: 'jupiter.jpg', width: 1024 },
-  { file: '2k_saturn.jpg', out: 'saturn.jpg', width: 1024 },
+  { file: '2k_jupiter.jpg', out: 'jupiter.jpg', width: 2048 },
+  { file: '2k_saturn.jpg', out: 'saturn.jpg', width: 2048 },
   { file: '2k_saturn_ring_alpha.png', out: 'saturn-ring.png', width: 1024, png: true },
   { file: '2k_uranus.jpg', out: 'uranus.jpg', width: 1024 },
   { file: '2k_neptune.jpg', out: 'neptune.jpg', width: 1024 },
