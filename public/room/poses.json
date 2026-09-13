@@ -5,8 +5,8 @@
   },
   "pc": {
     "src": "/room/pose-pc.png",
-    "width": 696,
-    "height": 1270
+    "width": 768,
+    "height": 1298
   },
   "about": {
     "src": "/room/pose-about.png",

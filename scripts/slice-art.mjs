@@ -18,15 +18,22 @@ const ROOM = { x: 0, y: 0, w: 1536, h: 440, outWidth: 4096 }
 const POSE_OUT_SCALE = 3 // pose files are 3x the original panel size
 // pc is cut before its drawn monitor/desk (the room supplies those) and
 // skills after its drawn wall, so the figures sit on the real furniture.
-// `erase` rectangles (panel coordinates) remove drawn furniture that would
-// clash with the room: the pc pose's desk edge below and right of his hands.
+// `erase` rectangles (in OUTPUT pixel coordinates of the trimmed pose file)
+// remove drawn furniture that would clash with the room.
 const POSES = {
   pc: {
     x: 14,
     y: 446,
-    w: 232,
+    w: 256,
     h: 490,
-    erase: [{ x: 222, y: 196, w: 10, h: 294 }],
+    erase: [
+      { x: 700, y: 0, w: 68, h: 470 }, // corner of his drawn monitor
+      { x: 440, y: 566, w: 328, h: 76 }, // desk top + front below forearm and fingers
+      { x: 380, y: 582, w: 60, h: 60 }, // desk front under the elbow
+      { x: 560, y: 640, w: 130, h: 30 }, // PC base / glow above the thigh
+      { x: 690, y: 640, w: 78, h: 80 }, // under-desk glow beside the knee
+      { x: 704, y: 720, w: 64, h: 578 }, // desk leg past the leg
+    ],
   },
   about: { x: 302, y: 446, w: 216, h: 490 },
   education: { x: 520, y: 446, w: 262, h: 490 },
@@ -104,9 +111,6 @@ try {
         canvas.height = h
         const ctx = canvas.getContext('2d')
         ctx.drawImage(window.sheet, r.x * factor, r.y * factor, w, h, 0, 0, w, h)
-        for (const e of r.erase ?? []) {
-          ctx.clearRect(e.x * factor, e.y * factor, e.w * factor, e.h * factor)
-        }
         const image = ctx.getImageData(0, 0, w, h)
         window.keyOutCheckerboard(image.data, w, h)
         if (factor > 1) window.clearWhereMaskClear(image.data, w, h, mask, r.w, r.h, factor)
@@ -124,6 +128,9 @@ try {
         const tctx = trimmed.getContext('2d')
         tctx.imageSmoothingQuality = 'high'
         tctx.drawImage(canvas, bounds.x, bounds.y, bounds.width, bounds.height, 0, 0, trimmed.width, trimmed.height)
+        // Furniture erasure comes last, in output coordinates, so despeckling
+        // and trimming still see the whole figure.
+        for (const e of r.erase ?? []) tctx.clearRect(e.x, e.y, e.w, e.h)
         return { width: trimmed.width, height: trimmed.height, png: trimmed.toDataURL('image/png') }
       },
       { r: rect, factor, outScale: POSE_OUT_SCALE },
