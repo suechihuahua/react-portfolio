@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { NavLink, Link } from 'react-router-dom'
 import { person, sections } from '../content/site.js'
 import { useRoomStore } from '../store/useRoomStore.js'
@@ -12,9 +13,22 @@ export default function ChapterRail() {
   const activeSlug = useRoomStore((s) => s.activeSlug)
   const voiceOn = useRoomStore((s) => s.voiceOn)
   const setVoiceOn = useRoomStore((s) => s.setVoiceOn)
+  const reducedMotion = useRoomStore((s) => s.prefersReducedMotion)
 
   const activeIndex = sections.findIndex((s) => s.slug === activeSlug)
   const progress = activeIndex < 0 ? 0 : (activeIndex + 1) / sections.length
+  const navRef = useRef(null)
+
+  // On narrow screens the rail is a horizontal scroller, so the current
+  // section can sit off-screen. Bring it into view whenever it changes.
+  useEffect(() => {
+    const active = navRef.current?.querySelector('.rail__link--active')
+    active?.scrollIntoView({
+      behavior: reducedMotion ? 'auto' : 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    })
+  }, [activeSlug, reducedMotion])
 
   return (
     <>
@@ -28,7 +42,7 @@ export default function ChapterRail() {
           <span className="rail__role">Computer Science · NTU</span>
         </Link>
 
-        <nav className="rail__nav" aria-label="Sections">
+        <nav className="rail__nav" aria-label="Sections" ref={navRef}>
           <NavLink to="/" end className={navClass}>
             <span className="rail__num">00</span>
             <span className="rail__label">The room</span>

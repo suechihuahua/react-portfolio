@@ -20,4 +20,8 @@ Object.defineProperty(window, 'matchMedia', {
 
 HTMLCanvasElement.prototype.getContext = () => null
 
+// jsdom implements no scrolling, but the chapter rail keeps the active
+// section in view on narrow screens.
+Element.prototype.scrollIntoView = () => {}
+
 afterEach(cleanup)

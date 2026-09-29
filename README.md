@@ -2,6 +2,8 @@
 
 A five-second title sequence opens onto an illustrated, interactive room. Inside, each section of the portfolio is a spot in the room and a pose of the avatar — click him and he changes into a suit and introduces himself; the bookshelf, desk, poster wall and bed hold education, work, projects, skills and hobbies. Built with React 19, Vite, react-router, framer-motion and zustand — no WebGL.
 
+The chrome is a clean dark theme: neutral zinc surfaces, hairline borders and white as the only accent, so the illustrated room carries all the colour. One typeface (Inter) throughout, with mono reserved for numerals and small labels.
+
 ## Develop
 
 ```bash
