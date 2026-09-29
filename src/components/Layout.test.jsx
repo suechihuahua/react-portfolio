@@ -29,27 +29,26 @@ describe('Layout', () => {
     window.sessionStorage.clear()
   })
 
-  it('runs the boot once, then shows the console', () => {
+  it('runs the welcome once, then shows the console', () => {
     vi.useFakeTimers()
     renderLayout()
-    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
-    // Each boot line schedules the next from an effect, so the render has to
-    // commit between steps -- one act() per tick, not one long jump.
-    for (let i = 0; i < 6; i += 1) act(() => vi.advanceTimersByTime(300))
+    expect(screen.getByRole('status', { name: /welcome/i })).toBeInTheDocument()
+    // The welcome drives itself from rAF, which the fake clock steps.
+    for (let i = 0; i < 400; i += 1) act(() => vi.advanceTimersByTime(20))
     expect(useConsoleStore.getState().booted).toBe(true)
     expect(window.sessionStorage.getItem('nf:booted')).toBe('true')
     expect(screen.getByText('home content')).toBeInTheDocument()
     vi.useRealTimers()
   })
 
-  it('skips the boot on a key press', () => {
+  it('skips the welcome on a key press', () => {
     renderLayout()
     fireEvent.keyDown(window, { key: 'Enter' })
     expect(useConsoleStore.getState().booted).toBe(true)
     expect(screen.getByText('home content')).toBeInTheDocument()
   })
 
-  it('ignores Tab so the boot does not swallow keyboard focus', () => {
+  it('ignores Tab so the welcome does not swallow keyboard focus', () => {
     renderLayout()
     fireEvent.keyDown(window, { key: 'Tab' })
     expect(useConsoleStore.getState().booted).toBe(false)
@@ -57,7 +56,7 @@ describe('Layout', () => {
 
   it('lands straight in the content on a deep link, with no gate', () => {
     renderLayout('/about')
-    expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('status', { name: /welcome/i })).not.toBeInTheDocument()
     expect(screen.getByText('about content')).toBeInTheDocument()
     expect(useConsoleStore.getState().activeSlug).toBe('about')
   })

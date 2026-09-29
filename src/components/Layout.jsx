@@ -4,13 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { person, sections, routeOrder } from '../content/site.js'
 import { useConsoleStore, watchMediaPreferences } from '../store/useConsoleStore.js'
 import { useScrollNavigation } from '../hooks/useScrollNavigation.js'
-import Boot from './Boot.jsx'
+import Welcome from './Welcome.jsx'
+import Ambient from './Ambient.jsx'
 import Sidebar from './Sidebar.jsx'
 import StatusBar from './StatusBar.jsx'
 import CommandPalette from './CommandPalette.jsx'
 
 // Mounts once and persists across every route change. There is no gate to
-// click through: the boot lines run once per session and hand straight over.
+// click through: the welcome runs once per session and hands straight over.
 export default function Layout() {
   const location = useLocation()
   const captureMode = new URLSearchParams(location.search).has('capture')
@@ -58,18 +59,17 @@ export default function Layout() {
         Skip to content
       </a>
 
-      <div className="console__grid" aria-hidden="true" />
-      <div className="console__vignette" aria-hidden="true" />
+      <Ambient />
 
       <AnimatePresence>
         {!booted && (
           <motion.div
-            key="boot"
-            className="boot-layer"
+            key="welcome"
+            className="welcome-layer"
             exit={{ opacity: 0 }}
             transition={{ duration: reducedMotion ? 0 : 0.35 }}
           >
-            <Boot onDone={finishBoot} />
+            <Welcome onDone={finishBoot} />
           </motion.div>
         )}
       </AnimatePresence>

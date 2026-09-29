@@ -1,9 +1,10 @@
 # Natsuo Fujita — portfolio
 
-A console. Near-black with a hairline grid, monospace chrome, and a command
-palette on `⌘K` that fuzzy-searches every section, link and action. No gate to
-click through: a three-line boot runs once per session and hands straight over.
-Built with React 19, Vite, react-router, framer-motion and zustand.
+A console. Near-black, with a slowly drifting grid and three soft colour fields
+behind everything, monospace chrome, and a command palette on `⌘K` that
+fuzzy-searches every section, link and action. A five-second welcome runs once
+per session — click anywhere or press any key to skip it. Built with React 19,
+Vite, react-router, framer-motion and zustand.
 
 ## Develop
 
@@ -18,7 +19,19 @@ npm run screenshots  # 375/768/1440 screenshots + overflow check
 ```
 
 Add `?capture` to any URL to render the content alone, without the sidebar,
-status bar or boot.
+status bar or welcome.
+
+## The welcome
+
+`src/lib/welcomeTimeline.js` holds the five seconds as pure maths: beats in
+milliseconds, and `welcomeState(elapsed)` returning every number the DOM needs.
+`Welcome.jsx` drives it from one `requestAnimationFrame` loop that writes CSS
+variables and the decrypting characters straight to the DOM, so React never
+re-renders during playback. Under `prefers-reduced-motion` it shows the settled
+card and moves on.
+
+The background (`Ambient.jsx`) animates `transform` only, so it composites on
+the GPU and never repaints over the content.
 
 ## How it moves
 
@@ -27,7 +40,8 @@ status bar or boot.
   and the external links.
 - `↑` `↓` (outside the palette) step through sections in order; so does a
   scroll or a swipe.
-- Deep links and `?capture` never show the boot, not even for a frame.
+- Click anywhere, or press any key, to skip the welcome.
+- Deep links and `?capture` never show the welcome, not even for a frame.
 
 ## Content
 
