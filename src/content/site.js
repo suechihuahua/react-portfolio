@@ -1,18 +1,21 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// Site content. Each entry in `sections` is one spot in the room:
-//   • spot   – where the camera looks: x/y in % of the room image, zoom factor
-//   • avatar – where the pose sprite stands: bottom-centre x/y in %, height in
-//              % of the room height
-//   • marker – where the pulsing hotspot sits on the object itself (room %)
-//   • pose   – which cut-out from public/room/pose-<pose>.png
-//   • lines  – what he says in the dialogue box before the card appears
-//   • blocks – the card content (see src/components/SectionCard.jsx for kinds:
-//              prose, list, timeline, projects)
+// Site content. Each entry in `sections` is one route and one screen of the
+// console:
+//   • slug    – the path, and what the prompt shows
+//   • label   – its name in the sidebar and the command palette
+//   • summary – one line, under the heading and in command-palette results
+//   • blocks  – the body (see src/components/SectionView.jsx for the kinds:
+//               prose, list, timeline, projects)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const person = {
   name: 'Natsuo Fujita',
-  tagline: 'Computer science student at NTU. I like understanding how systems work — and how they break.',
+  handle: 'natsuo',
+  role: 'Computer Science · NTU',
+  tagline:
+    'Computer science student at NTU. I like understanding how systems work — and how they break.',
+  location: 'Singapore',
+  timezone: 'Asia/Singapore',
   email: 'fujita.natsuo@gmail.com',
   ntuEmail: 'natsuo001@e.ntu.edu.sg',
   github: 'https://github.com/suechihuahua',
@@ -20,29 +23,11 @@ export const person = {
   resume: '/resume.pdf',
 }
 
-export const ROOM_IMAGE = { src: '/room/room.jpg', width: 4096, height: 1173 }
-
-// Idle state: sitting at the PC, camera wide on the desk side.
-export const home = {
-  spot: { x: 60, y: 52, zoom: 1.05 },
-  avatar: { x: 62, y: 100, height: 78 },
-  pose: 'pc',
-}
-
 export const sections = [
   {
     slug: 'about',
-    label: 'About me',
-    pose: 'about',
-    spot: { x: 52, y: 60, zoom: 1.32 },
-    avatar: { x: 52, y: 99, height: 70 },
-    marker: { x: 62, y: 45 },
-    lines: [
-      "Hi, I'm Natsuo Fujita.",
-      'Computer Science undergraduate at Nanyang Technological University, class of 2029.',
-      'I like taking things apart to see how they work — and building things from the ground up.',
-      'Have a look around my room.',
-    ],
+    label: 'About',
+    summary: 'Who I am and what I keep coming back to.',
     blocks: [
       {
         kind: 'prose',
@@ -61,11 +46,7 @@ export const sections = [
   {
     slug: 'education',
     label: 'Education',
-    pose: 'education',
-    spot: { x: 44, y: 58, zoom: 1.32 },
-    avatar: { x: 47, y: 99, height: 70 },
-    marker: { x: 44, y: 28 },
-    lines: ['This is where the studying happens.', 'NTU for computer science, after A-levels at Tampines Meridian.'],
+    summary: 'NTU for computer science, after A-levels at Tampines Meridian.',
     blocks: [
       {
         kind: 'timeline',
@@ -85,13 +66,9 @@ export const sections = [
     ],
   },
   {
-    slug: 'work',
-    label: 'Work experience',
-    pose: 'work',
-    spot: { x: 71, y: 58, zoom: 1.32 },
-    avatar: { x: 74, y: 99, height: 70 },
-    marker: { x: 51.5, y: 62 },
-    lines: ['Two years of National Service taught me a lot about keeping things running.', 'Before that, I worked the kitchen and the till at Tori-Q.'],
+    slug: 'experience',
+    label: 'Experience',
+    summary: 'Two years of National Service, and a kitchen before that.',
     blocks: [
       {
         kind: 'timeline',
@@ -100,7 +77,10 @@ export const sections = [
             title: 'Supply Base East',
             subtitle: 'National Serviceman (full-time)',
             period: 'Jul 2023 – Jul 2025',
-            points: ['In charge of camp passes and clearance', 'Mastered Microsoft Excel and Outlook for daily operations'],
+            points: [
+              'In charge of camp passes and clearance',
+              'Mastered Microsoft Excel and Outlook for daily operations',
+            ],
           },
           {
             title: 'Tori-Q',
@@ -118,11 +98,7 @@ export const sections = [
   {
     slug: 'projects',
     label: 'Projects',
-    pose: 'pc',
-    spot: { x: 68, y: 55, zoom: 1.4 },
-    avatar: { x: 62, y: 100, height: 78 },
-    marker: { x: 76, y: 38 },
-    lines: ['This is where I build things.', 'Latest: a Roblox game with my team for the Garena Hackathon — and this room you are standing in.'],
+    summary: 'What I have built so far.',
     blocks: [
       {
         kind: 'projects',
@@ -135,7 +111,8 @@ export const sections = [
           {
             title: 'This portfolio',
             year: '2026',
-            description: 'An illustrated, interactive room built with React and Vite — every section is a spot in the room.',
+            description:
+              'A keyboard-driven console built with React and Vite — command palette, fuzzy search, nothing heavier than the router.',
             link: 'https://github.com/suechihuahua/react-portfolio',
           },
         ],
@@ -145,11 +122,7 @@ export const sections = [
   {
     slug: 'skills',
     label: 'Skills',
-    pose: 'skills',
-    spot: { x: 55, y: 58, zoom: 1.32 },
-    avatar: { x: 54.2, y: 99, height: 70 },
-    marker: { x: 56, y: 22 },
-    lines: ['The toolbox so far.', 'Python, C, C++ and Java for the most part — Git and the web on the side.'],
+    summary: 'The toolbox: Python, C, C++, Java, and the web on the side.',
     blocks: [
       {
         kind: 'list',
@@ -164,11 +137,7 @@ export const sections = [
   {
     slug: 'hobbies',
     label: 'Hobbies',
-    pose: 'hobbies',
-    spot: { x: 23, y: 62, zoom: 1.5 },
-    avatar: { x: 24, y: 99, height: 62 },
-    marker: { x: 20, y: 62 },
-    lines: ['When the work is done: games, the gym, and a very long anime backlog.', 'I was vice-captain of the basketball team — still play when I can.'],
+    summary: 'Basketball, the gym, and a very long anime backlog.',
     blocks: [
       {
         kind: 'list',

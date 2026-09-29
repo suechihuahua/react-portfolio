@@ -2,39 +2,29 @@ import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { person, sections, routeOrder } from '../content/site.js'
-import { useRoomStore, watchMediaPreferences } from '../store/useRoomStore.js'
+import { useConsoleStore, watchMediaPreferences } from '../store/useConsoleStore.js'
 import { useScrollNavigation } from '../hooks/useScrollNavigation.js'
-import TitleSequence from './TitleSequence.jsx'
-import DoorIntro from './DoorIntro.jsx'
-import RoomStage from './RoomStage.jsx'
-import Dialogue from './Dialogue.jsx'
-import ChapterRail from './ChapterRail.jsx'
+import Boot from './Boot.jsx'
+import Sidebar from './Sidebar.jsx'
+import StatusBar from './StatusBar.jsx'
+import CommandPalette from './CommandPalette.jsx'
 
-// Mounts once and persists across every route change; the room stage never
-// remounts, only `activeSlug` changes and the camera follows.
-//
-// First visit runs title sequence -> door -> room. Deep links and capture
-// runs land straight in the room.
+// Mounts once and persists across every route change. There is no gate to
+// click through: the boot lines run once per session and hand straight over.
 export default function Layout() {
   const location = useLocation()
   const captureMode = new URLSearchParams(location.search).has('capture')
   const reducedMotion = useReducedMotion()
 
-  const introSeenStore = useRoomStore((s) => s.introSeen)
-  const finishIntro = useRoomStore((s) => s.finishIntro)
-  const enteredStore = useRoomStore((s) => s.entered)
-  const enter = useRoomStore((s) => s.enter)
-  const setActiveSlug = useRoomStore((s) => s.setActiveSlug)
-  const dialogueDone = useRoomStore((s) => s.dialogueDone)
-  const finishDialogue = useRoomStore((s) => s.finishDialogue)
+  const bootedStore = useConsoleStore((s) => s.booted)
+  const finishBoot = useConsoleStore((s) => s.finishBoot)
+  const setActiveSlug = useConsoleStore((s) => s.setActiveSlug)
+  const paletteOpen = useConsoleStore((s) => s.paletteOpen)
+  const togglePalette = useConsoleStore((s) => s.togglePalette)
 
-  // Derived from the URL directly so the very first render already knows the
-  // section (the store copy below is for the stage and rail).
-  const current = sections.find((s) => `/${s.slug}` === location.pathname)
+  // Deep links and capture runs never show the boot, not even for a frame.
   const deepLinked = location.pathname !== '/'
-  const skipGates = deepLinked || captureMode
-  const introSeen = introSeenStore || skipGates
-  const entered = enteredStore || skipGates
+  const booted = bootedStore || deepLinked || captureMode
 
   useEffect(() => watchMediaPreferences(), [])
 
@@ -45,93 +35,72 @@ export default function Layout() {
   }, [location.pathname, setActiveSlug])
 
   useEffect(() => {
-    if (!skipGates) return
-    if (!introSeenStore) finishIntro()
-    if (!enteredStore) enter()
-  }, [skipGates, introSeenStore, enteredStore, finishIntro, enter])
+    if ((deepLinked || captureMode) && !bootedStore) finishBoot()
+  }, [deepLinked, captureMode, bootedStore, finishBoot])
 
-  useScrollNavigation(routeOrder, entered && !captureMode)
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault()
+        togglePalette()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [togglePalette])
 
-  const showDialogue = Boolean(current?.lines?.length) && !dialogueDone
-  const showCard = !current || dialogueDone
+  // Arrow keys step through sections, but not while the palette owns them.
+  useScrollNavigation(routeOrder, booted && !captureMode && !paletteOpen)
 
   return (
-    <div className="experience">
-      <a className="skip-link" href="#overlay-content">
+    <div className="console">
+      <a className="skip-link" href="#main">
         Skip to content
       </a>
 
-      {entered && <RoomStage />}
+      <div className="console__grid" aria-hidden="true" />
+      <div className="console__vignette" aria-hidden="true" />
 
       <AnimatePresence>
-        {!introSeen && (
+        {!booted && (
           <motion.div
-            key="intro"
-            className="gate-layer"
+            key="boot"
+            className="boot-layer"
             exit={{ opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.5 }}
+            transition={{ duration: reducedMotion ? 0 : 0.35 }}
           >
-            <TitleSequence onDone={finishIntro} />
-          </motion.div>
-        )}
-
-        {introSeen && !entered && (
-          <motion.div
-            key="door"
-            className="gate-layer"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.8 }}
-          >
-            <DoorIntro />
+            <Boot onDone={finishBoot} />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {entered && !captureMode && (
+      {booted && !captureMode && <Sidebar />}
+
+      <main className="main" id="main">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            className="main__inner"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: reducedMotion ? 0 : 0.22, ease: [0.2, 0.7, 0.3, 1] }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+      </main>
+
+      {booted && !captureMode && (
         <>
-          <ChapterRail />
-
-          {showDialogue && (
-            <Dialogue
-              key={current.slug}
-              speaker={person.name}
-              lines={current.lines}
-              onDone={finishDialogue}
-            />
-          )}
-
-          <AnimatePresence mode="wait">
-            {showCard && (
-              <motion.main
-                key={location.pathname}
-                className="overlay-pane"
-                id="overlay-content"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -12 }}
-                transition={{ duration: reducedMotion ? 0 : 0.4, ease: [0.2, 0.7, 0.3, 1] }}
-              >
-                <div className="overlay-pane__inner">
-                  <Outlet />
-                </div>
-              </motion.main>
-            )}
-          </AnimatePresence>
-
-          <footer className="colophon">
-            <a href={`mailto:${person.email}`}>{person.email}</a>
-            <a href={`mailto:${person.ntuEmail}`}>{person.ntuEmail}</a>
-            <a href={person.linkedin} target="_blank" rel="noreferrer">
-              LinkedIn
-            </a>
-            <a href={person.github} target="_blank" rel="noreferrer">
-              GitHub
-            </a>
-          </footer>
+          <StatusBar />
+          <CommandPalette />
         </>
       )}
+
+      <p className="sr-only">
+        {person.name}. {person.tagline}
+      </p>
     </div>
   )
 }

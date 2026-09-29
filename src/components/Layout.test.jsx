@@ -1,20 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
-import { useRoomStore } from '../store/useRoomStore.js'
-
-vi.mock('./RoomStage.jsx', () => ({
-  default: () => <div data-testid="room" />,
-}))
-
-vi.mock('./TitleSequence.jsx', () => ({
-  default: ({ onDone }) => (
-    <button type="button" data-testid="intro" onClick={onDone}>
-      intro
-    </button>
-  ),
-}))
+import { useConsoleStore } from '../store/useConsoleStore.js'
 
 function renderLayout(path = '/') {
   return render(
@@ -32,75 +20,76 @@ function renderLayout(path = '/') {
 
 describe('Layout', () => {
   beforeEach(() => {
-    useRoomStore.setState({
-      introSeen: false,
-      entered: false,
+    useConsoleStore.setState({
+      booted: false,
+      paletteOpen: false,
       activeSlug: null,
-      dialogueDone: false,
+      prefersReducedMotion: false,
     })
     window.sessionStorage.clear()
   })
 
-  it('opens on the title sequence alone', () => {
+  it('runs the boot once, then shows the console', () => {
+    vi.useFakeTimers()
     renderLayout()
-    expect(screen.getByTestId('intro')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /open the door/i })).not.toBeInTheDocument()
-    expect(screen.queryByTestId('room')).not.toBeInTheDocument()
-    expect(screen.queryByText('home content')).not.toBeInTheDocument()
+    expect(screen.getByRole('status', { name: /loading/i })).toBeInTheDocument()
+    // Each boot line schedules the next from an effect, so the render has to
+    // commit between steps -- one act() per tick, not one long jump.
+    for (let i = 0; i < 6; i += 1) act(() => vi.advanceTimersByTime(300))
+    expect(useConsoleStore.getState().booted).toBe(true)
+    expect(window.sessionStorage.getItem('nf:booted')).toBe('true')
+    expect(screen.getByText('home content')).toBeInTheDocument()
+    vi.useRealTimers()
   })
 
-  it('hands off from the title sequence to the door', () => {
+  it('skips the boot on a key press', () => {
     renderLayout()
-    fireEvent.click(screen.getByTestId('intro'))
-    expect(useRoomStore.getState().introSeen).toBe(true)
-    expect(window.sessionStorage.getItem('nf:intro')).toBe('true')
-    expect(screen.getByRole('button', { name: /open the door/i })).toBeInTheDocument()
-    expect(screen.queryByText('home content')).not.toBeInTheDocument()
-  })
-
-  it('enters the room once the door opens', () => {
-    useRoomStore.setState({ introSeen: true, prefersReducedMotion: true })
-    renderLayout()
-    fireEvent.click(screen.getByRole('button', { name: /open the door/i }))
-    expect(useRoomStore.getState().entered).toBe(true)
-    expect(screen.getByTestId('room')).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'Enter' })
+    expect(useConsoleStore.getState().booted).toBe(true)
     expect(screen.getByText('home content')).toBeInTheDocument()
   })
 
-  it('skips both gates on a deep link and starts the dialogue', () => {
-    renderLayout('/about')
-    expect(screen.queryByTestId('intro')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /open the door/i })).not.toBeInTheDocument()
-    expect(useRoomStore.getState().activeSlug).toBe('about')
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.queryByText('about content')).not.toBeInTheDocument()
+  it('ignores Tab so the boot does not swallow keyboard focus', () => {
+    renderLayout()
+    fireEvent.keyDown(window, { key: 'Tab' })
+    expect(useConsoleStore.getState().booted).toBe(false)
   })
 
-  it('shows the card once the dialogue is skipped', () => {
+  it('lands straight in the content on a deep link, with no gate', () => {
     renderLayout('/about')
-    fireEvent.click(screen.getByRole('button', { name: 'skip' }))
+    expect(screen.queryByRole('status', { name: /loading/i })).not.toBeInTheDocument()
     expect(screen.getByText('about content')).toBeInTheDocument()
+    expect(useConsoleStore.getState().activeSlug).toBe('about')
   })
 
-  it('lists every contact link in the footer', () => {
-    useRoomStore.setState({ introSeen: true, entered: true })
+  it('opens and closes the command palette with the keyboard shortcut', () => {
+    useConsoleStore.setState({ booted: true })
     renderLayout()
-    expect(screen.getByRole('link', { name: 'fujita.natsuo@gmail.com' })).toHaveAttribute(
-      'href',
-      'mailto:fujita.natsuo@gmail.com',
-    )
-    expect(screen.getByRole('link', { name: 'natsuo001@e.ntu.edu.sg' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'LinkedIn' })).toHaveAttribute(
-      'href',
-      'https://www.linkedin.com/in/natsuo-fujita',
-    )
-    expect(screen.getByRole('link', { name: 'GitHub' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'k', metaKey: true })
+    expect(screen.getByRole('dialog', { name: /command palette/i })).toBeInTheDocument()
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('steps to the first section on a wheel once inside', () => {
-    useRoomStore.setState({ introSeen: true, entered: true })
+  it('shows the sidebar and status bar once booted', () => {
+    useConsoleStore.setState({ booted: true })
     renderLayout()
-    fireEvent.wheel(screen.getByTestId('room'), { deltaY: 120 })
-    expect(useRoomStore.getState().activeSlug).toBe('about')
+    expect(screen.getByRole('navigation', { name: /sections/i })).toBeInTheDocument()
+    expect(screen.getByRole('contentinfo')).toBeInTheDocument()
+  })
+
+  it('steps to the first section on a wheel once booted', () => {
+    useConsoleStore.setState({ booted: true })
+    renderLayout()
+    fireEvent.wheel(screen.getByRole('main'), { deltaY: 120 })
+    expect(useConsoleStore.getState().activeSlug).toBe('about')
+  })
+
+  it('leaves arrow keys to the palette while it is open', () => {
+    useConsoleStore.setState({ booted: true, paletteOpen: true })
+    renderLayout()
+    fireEvent.keyDown(window, { key: 'ArrowDown' })
+    expect(useConsoleStore.getState().activeSlug).toBeNull()
   })
 })

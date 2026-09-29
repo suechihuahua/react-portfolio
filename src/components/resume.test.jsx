@@ -2,16 +2,16 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home.jsx'
-import ChapterRail from './ChapterRail.jsx'
+import Sidebar from './Sidebar.jsx'
 import { person } from '../content/site.js'
-import { useRoomStore } from '../store/useRoomStore.js'
+import { useConsoleStore } from '../store/useConsoleStore.js'
 
 describe('resume download', () => {
-  beforeEach(() => useRoomStore.setState({ activeSlug: null, voiceOn: false }))
+  beforeEach(() => useConsoleStore.setState({ activeSlug: null, paletteOpen: false }))
 
   it.each([
     ['Home', Home],
-    ['ChapterRail', ChapterRail],
+    ['Sidebar', Sidebar],
   ])('%s links to the resume with download', (_, Component) => {
     render(
       <MemoryRouter>

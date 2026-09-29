@@ -1,5 +1,6 @@
 import { person } from '../content/site.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
+import Prompt from './Prompt.jsx'
 
 function Prose({ block }) {
   return (
@@ -20,7 +21,7 @@ function ListBlock({ block }) {
       {block.heading && <h2 className="block__heading">{block.heading}</h2>}
       <div className="grouplist">
         {block.groups.map((group) => (
-          <div className="grouplist__group" key={group.name}>
+          <div key={group.name}>
             <p className="grouplist__name">{group.name}</p>
             <ul className="grouplist__items">
               {group.items.map((item) => (
@@ -69,7 +70,7 @@ function Projects({ block }) {
           <p className="projects__desc">{item.description}</p>
           {item.link && (
             <a className="projects__link" href={item.link} target="_blank" rel="noreferrer">
-              View source
+              View source <span aria-hidden="true">↗</span>
             </a>
           )}
         </li>
@@ -80,22 +81,26 @@ function Projects({ block }) {
 
 const RENDERERS = { prose: Prose, list: ListBlock, timeline: Timeline, projects: Projects }
 
-export default function SectionCard({ section, index, total }) {
+export default function SectionView({ section, index, total }) {
   useDocumentTitle(`${person.name} — ${section.label}`)
 
   return (
-    <article className="entry">
-      <header className="entry__header">
-        <p className="entry__eyebrow">
-          <span className="entry__num">{String(index + 1).padStart(2, '0')}</span>
-          <span className="entry__of">/ {String(total).padStart(2, '0')}</span>
+    <article className="screen">
+      <Prompt path={`/${section.slug}`} />
+
+      <header className="screen__head">
+        <p className="screen__meta">
+          <span className="screen__num">{String(index + 1).padStart(2, '0')}</span>
+          <span className="screen__of">/ {String(total).padStart(2, '0')}</span>
         </p>
-        <h1 className="entry__title">{section.label}</h1>
+        <h1 className="screen__title">{section.label}</h1>
+        {section.summary && <p className="screen__summary">{section.summary}</p>}
       </header>
+
       {section.blocks.map((block, i) => {
         const Renderer = RENDERERS[block.kind] || Prose
         return (
-          <section className="block" key={i}>
+          <section className="block" key={i} style={{ '--i': i }}>
             <Renderer block={block} />
           </section>
         )

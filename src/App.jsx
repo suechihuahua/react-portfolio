@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout.jsx'
 import Home from './components/Home.jsx'
-import SectionCard from './components/SectionCard.jsx'
+import SectionView from './components/SectionView.jsx'
 import { sections } from './content/site.js'
 
 function App() {
@@ -13,7 +13,7 @@ function App() {
           <Route
             key={section.slug}
             path={section.slug}
-            element={<SectionCard section={section} index={i} total={sections.length} />}
+            element={<SectionView section={section} index={i} total={sections.length} />}
           />
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />

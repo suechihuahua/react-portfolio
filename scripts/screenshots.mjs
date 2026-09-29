@@ -5,7 +5,7 @@ import { createServer } from 'vite'
 import { chromium } from 'playwright'
 
 const WIDTHS = [375, 768, 1440]
-const ROUTES = ['/', '/about', '/hobbies']
+const ROUTES = ['/', '/experience', '/projects']
 
 mkdirSync('screenshots', { recursive: true })
 const server = await createServer({ server: { port: 4175, strictPort: true }, logLevel: 'error' })
@@ -17,17 +17,14 @@ try {
     const page = await browser.newPage({ viewport: { width, height: width <= 768 ? 812 : 900 } })
     for (const route of ROUTES) {
       await page.goto(`http://localhost:4175${route}`)
-      await page.waitForTimeout(800)
-      if (route === '/') {
-        // Two gates on a first visit: the title sequence, then the door.
-        await page.keyboard.press('Enter')
-        await page.waitForSelector('.door', { timeout: 10000 }).catch(() => {})
-        await page.click('.door').catch(() => {})
-        await page.waitForTimeout(2600)
-      } else {
-        await page.click('.dialogue__skip').catch(() => {})
-        await page.waitForTimeout(1600)
-      }
+      // Let React hydrate, skip the boot if it is running, then wait for the
+      // layer to actually unmount rather than guessing at a duration.
+      await page.waitForTimeout(400)
+      await page.keyboard.press('Enter')
+      await page
+        .waitForFunction(() => !document.querySelector('.boot-layer'), null, { timeout: 8000 })
+        .catch(() => {})
+      await page.waitForTimeout(600)
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)
       if (scrollWidth > width) {
         console.error(`horizontal overflow at ${width}px on ${route}: scrollWidth=${scrollWidth}`)
