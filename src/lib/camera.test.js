@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { coverSize, getCameraTransform } from './camera.js'
+import { coverSize, getCameraTransform, FOCUS_X_WIDE } from './camera.js'
 
 const room = { width: 3072, height: 880 }
 
@@ -36,7 +36,7 @@ describe('getCameraTransform', () => {
     const t = getCameraTransform(spot, room, viewport)
     const spotX = t.x + (spot.x / 100) * t.width * t.zoom
     const spotY = t.y + (spot.y / 100) * t.height * t.zoom
-    expect(spotX).toBeCloseTo(viewport.width * 0.7, 5)
+    expect(spotX).toBeCloseTo(viewport.width * FOCUS_X_WIDE, 5)
     expect(spotY).toBeCloseTo(viewport.height * 0.48, 5)
     const narrowViewport = { width: 375, height: 812 }
     const n = getCameraTransform({ x: 50, y: 50, zoom: 1.4 }, room, narrowViewport, { narrow: true })

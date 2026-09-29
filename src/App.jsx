@@ -9,11 +9,11 @@ function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<Home />} />
-        {sections.map((section) => (
+        {sections.map((section, i) => (
           <Route
             key={section.slug}
             path={section.slug}
-            element={<SectionCard section={section} />}
+            element={<SectionCard section={section} index={i} total={sections.length} />}
           />
         ))}
         <Route path="*" element={<Navigate to="/" replace />} />

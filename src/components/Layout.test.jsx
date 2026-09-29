@@ -8,6 +8,14 @@ vi.mock('./RoomStage.jsx', () => ({
   default: () => <div data-testid="room" />,
 }))
 
+vi.mock('./TitleSequence.jsx', () => ({
+  default: ({ onDone }) => (
+    <button type="button" data-testid="intro" onClick={onDone}>
+      intro
+    </button>
+  ),
+}))
+
 function renderLayout(path = '/') {
   return render(
     <MemoryRouter initialEntries={[path]}>
@@ -24,29 +32,44 @@ function renderLayout(path = '/') {
 
 describe('Layout', () => {
   beforeEach(() => {
-    useRoomStore.setState({ entered: false, activeSlug: null, dialogueDone: false })
+    useRoomStore.setState({
+      introSeen: false,
+      entered: false,
+      activeSlug: null,
+      dialogueDone: false,
+    })
     window.sessionStorage.clear()
   })
 
-  it('shows only the door on a first visit', () => {
+  it('opens on the title sequence alone', () => {
     renderLayout()
-    expect(screen.getByRole('button', { name: /open the door/i })).toBeInTheDocument()
+    expect(screen.getByTestId('intro')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /open the door/i })).not.toBeInTheDocument()
     expect(screen.queryByTestId('room')).not.toBeInTheDocument()
     expect(screen.queryByText('home content')).not.toBeInTheDocument()
   })
 
-  it('opens the door and enters the room', () => {
-    useRoomStore.setState({ prefersReducedMotion: true })
+  it('hands off from the title sequence to the door', () => {
+    renderLayout()
+    fireEvent.click(screen.getByTestId('intro'))
+    expect(useRoomStore.getState().introSeen).toBe(true)
+    expect(window.sessionStorage.getItem('nf:intro')).toBe('true')
+    expect(screen.getByRole('button', { name: /open the door/i })).toBeInTheDocument()
+    expect(screen.queryByText('home content')).not.toBeInTheDocument()
+  })
+
+  it('enters the room once the door opens', () => {
+    useRoomStore.setState({ introSeen: true, prefersReducedMotion: true })
     renderLayout()
     fireEvent.click(screen.getByRole('button', { name: /open the door/i }))
     expect(useRoomStore.getState().entered).toBe(true)
     expect(screen.getByTestId('room')).toBeInTheDocument()
     expect(screen.getByText('home content')).toBeInTheDocument()
-    expect(window.sessionStorage.getItem('nf:entered')).toBe('true')
   })
 
-  it('skips the door on a deep link and starts the dialogue', () => {
+  it('skips both gates on a deep link and starts the dialogue', () => {
     renderLayout('/about')
+    expect(screen.queryByTestId('intro')).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /open the door/i })).not.toBeInTheDocument()
     expect(useRoomStore.getState().activeSlug).toBe('about')
     expect(screen.getByRole('dialog')).toBeInTheDocument()
@@ -60,7 +83,7 @@ describe('Layout', () => {
   })
 
   it('lists every contact link in the footer', () => {
-    useRoomStore.setState({ entered: true })
+    useRoomStore.setState({ introSeen: true, entered: true })
     renderLayout()
     expect(screen.getByRole('link', { name: 'fujita.natsuo@gmail.com' })).toHaveAttribute(
       'href',
@@ -75,7 +98,7 @@ describe('Layout', () => {
   })
 
   it('steps to the first section on a wheel once inside', () => {
-    useRoomStore.setState({ entered: true })
+    useRoomStore.setState({ introSeen: true, entered: true })
     renderLayout()
     fireEvent.wheel(screen.getByTestId('room'), { deltaY: 120 })
     expect(useRoomStore.getState().activeSlug).toBe('about')

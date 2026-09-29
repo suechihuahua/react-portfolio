@@ -1,8 +1,10 @@
-// Regenerates the OG image and PNG favicons from the live room.
+// Regenerates the room poster and PNG favicons from the live room.
 // Run with: npm run capture
+//
+// The social card (public/og.png) is a frame of the title sequence instead --
+// see scripts/record-intro.mjs.
 import { createServer } from 'vite'
 import { chromium } from 'playwright'
-import { readFileSync } from 'node:fs'
 
 const server = await createServer({ server: { port: 4174, strictPort: true }, logLevel: 'error' })
 await server.listen()
@@ -16,15 +18,6 @@ try {
   await page.waitForTimeout(2500)
   await page.screenshot({ path: 'public/room-poster.jpg', type: 'jpeg', quality: 82 })
   console.log('wrote public/room-poster.jpg')
-
-  const og = await browser.newPage({ viewport: { width: 1200, height: 630 } })
-  await og.route('**/og-template', (route) =>
-    route.fulfill({ contentType: 'text/html', body: readFileSync('scripts/og-template.html', 'utf8') }),
-  )
-  await og.goto(`${base}/og-template`)
-  await og.waitForTimeout(1500)
-  await og.screenshot({ path: 'public/og.png', type: 'png' })
-  console.log('wrote public/og.png')
 
   for (const [size, file] of [
     [32, 'public/favicon-32.png'],

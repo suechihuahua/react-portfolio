@@ -19,7 +19,10 @@ try {
       await page.goto(`http://localhost:4175${route}`)
       await page.waitForTimeout(800)
       if (route === '/') {
-        await page.keyboard.press('Enter') // open the door
+        // Two gates on a first visit: the title sequence, then the door.
+        await page.keyboard.press('Enter')
+        await page.waitForSelector('.door', { timeout: 10000 }).catch(() => {})
+        await page.click('.door').catch(() => {})
         await page.waitForTimeout(2600)
       } else {
         await page.click('.dialogue__skip').catch(() => {})

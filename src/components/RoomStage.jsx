@@ -93,7 +93,7 @@ export default function RoomStage() {
             onClick={() => navigate(`/${section.slug}`)}
           >
             <span className="hotspot__ring" />
-            <span className="hotspot__label">{section.label}</span>
+            <span className="hotspot__tip">{section.label}</span>
           </button>
         ))}
       </motion.div>

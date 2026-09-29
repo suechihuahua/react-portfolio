@@ -2,6 +2,7 @@ import { create } from 'zustand'
 
 const canUseDom = typeof window !== 'undefined'
 const ENTERED_KEY = 'nf:entered'
+const INTRO_KEY = 'nf:intro'
 const VOICE_KEY = 'nf:voice'
 
 function readSession(key) {
@@ -23,6 +24,8 @@ function writeSession(key, value) {
 }
 
 export const useRoomStore = create((set) => ({
+  // true once the title sequence has played (or been skipped) this session
+  introSeen: readSession(INTRO_KEY),
   // true once the visitor has walked through the door this session
   entered: readSession(ENTERED_KEY),
   activeSlug: null,
@@ -34,6 +37,10 @@ export const useRoomStore = create((set) => ({
     : false,
   isNarrowViewport: canUseDom ? window.matchMedia('(max-width: 768px)').matches : false,
 
+  finishIntro: () => {
+    writeSession(INTRO_KEY, true)
+    set({ introSeen: true })
+  },
   enter: () => {
     writeSession(ENTERED_KEY, true)
     set({ entered: true })

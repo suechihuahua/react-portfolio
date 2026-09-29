@@ -2,12 +2,14 @@ import { Link } from 'react-router-dom'
 import { person, sections } from '../content/site.js'
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js'
 
+const pad = (n) => String(n).padStart(2, '0')
+
 export default function Home() {
   useDocumentTitle(`${person.name} — portfolio`)
 
   return (
     <section className="home">
-      <p className="home__kicker">Portfolio</p>
+      <p className="entry__eyebrow">Portfolio</p>
       <h1 className="home__name">{person.name}</h1>
       <p className="home__tagline">{person.tagline}</p>
 
@@ -20,17 +22,16 @@ export default function Home() {
         </a>
       </div>
 
-      <nav className="contents" aria-label="Sections">
-        <p className="contents__title">Look around</p>
-        <ul className="contents__list">
-          {sections.map((section, i) => (
-            <li className="contents__item" key={section.slug} style={{ '--i': i }}>
-              <Link to={section.slug} className="contents__link">
-                {section.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
+      <nav className="index" aria-label="Sections">
+        {sections.map((section, i) => (
+          <Link className="index__row" to={section.slug} key={section.slug} style={{ '--i': i }}>
+            <span className="index__num">{pad(i + 1)}</span>
+            <span className="index__label">{section.label}</span>
+            <span className="index__arrow" aria-hidden="true">
+              →
+            </span>
+          </Link>
+        ))}
       </nav>
     </section>
   )

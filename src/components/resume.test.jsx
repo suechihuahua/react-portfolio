@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import Home from './Home.jsx'
-import HUD from './HUD.jsx'
+import ChapterRail from './ChapterRail.jsx'
 import { person } from '../content/site.js'
 import { useRoomStore } from '../store/useRoomStore.js'
 
@@ -11,7 +11,7 @@ describe('resume download', () => {
 
   it.each([
     ['Home', Home],
-    ['HUD', HUD],
+    ['ChapterRail', ChapterRail],
   ])('%s links to the resume with download', (_, Component) => {
     render(
       <MemoryRouter>

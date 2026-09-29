@@ -80,12 +80,16 @@ function Projects({ block }) {
 
 const RENDERERS = { prose: Prose, list: ListBlock, timeline: Timeline, projects: Projects }
 
-export default function SectionCard({ section }) {
+export default function SectionCard({ section, index, total }) {
   useDocumentTitle(`${person.name} — ${section.label}`)
 
   return (
     <article className="entry">
       <header className="entry__header">
+        <p className="entry__eyebrow">
+          <span className="entry__num">{String(index + 1).padStart(2, '0')}</span>
+          <span className="entry__of">/ {String(total).padStart(2, '0')}</span>
+        </p>
         <h1 className="entry__title">{section.label}</h1>
       </header>
       {section.blocks.map((block, i) => {

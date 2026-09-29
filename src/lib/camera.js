@@ -8,10 +8,15 @@ export function coverSize(room, viewport) {
   return { width: room.width * scale, height: room.height * scale }
 }
 
+// Desktop keeps the chapter rail and the content card down the left, so the
+// free half starts further right than the midpoint.
+export const FOCUS_X_WIDE = 0.76
+export const FOCUS_X_NARROW = 0.5
+
 export function focusPoint(viewport, { narrow = false } = {}) {
   return narrow
-    ? { x: viewport.width * 0.5, y: viewport.height * 0.42 }
-    : { x: viewport.width * 0.7, y: viewport.height * 0.48 }
+    ? { x: viewport.width * FOCUS_X_NARROW, y: viewport.height * 0.42 }
+    : { x: viewport.width * FOCUS_X_WIDE, y: viewport.height * 0.48 }
 }
 
 export function getCameraTransform(spot, room, viewport, { narrow = false } = {}) {

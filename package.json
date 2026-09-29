@@ -13,7 +13,8 @@
     "check:bundle": "vite build && node scripts/check-bundle.mjs",
     "capture": "node scripts/capture.mjs",
     "art": "node scripts/slice-art.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "intro:video": "node scripts/record-intro.mjs"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

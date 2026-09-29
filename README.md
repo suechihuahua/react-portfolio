@@ -1,6 +1,6 @@
 # Natsuo Fujita — portfolio
 
-An illustrated, interactive room. A door opens on black; inside, each section of the portfolio is a spot in the room and a pose of the avatar — click him and he changes into a suit and introduces himself; the bookshelf, desk, poster wall and bed hold education, work, projects, skills and hobbies. Built with React 19, Vite, react-router, framer-motion and zustand — no WebGL.
+A five-second title sequence opens onto an illustrated, interactive room. Inside, each section of the portfolio is a spot in the room and a pose of the avatar — click him and he changes into a suit and introduces himself; the bookshelf, desk, poster wall and bed hold education, work, projects, skills and hobbies. Built with React 19, Vite, react-router, framer-motion and zustand — no WebGL.
 
 ## Develop
 
@@ -11,15 +11,36 @@ npm test             # Vitest
 npm run lint
 npm run check:bundle # build + keep the initial JS under budget
 npm run art          # slice art/sheet.png into public/room (room + six poses)
-npm run capture      # regenerate public/room-poster.jpg, og.png, favicons
+npm run capture      # regenerate public/room-poster.jpg and the favicons
+npm run intro:video  # render the title sequence to public/intro.mp4 + og.png
 npm run screenshots  # 375/768/1440 screenshots + overflow check
 ```
 
-Add `?capture` to the URL to render the room alone (no door, menu or cards).
+Add `?capture` to the URL to render the room alone (no gates, menu or cards).
+
+## The title sequence
+
+`src/lib/introTimeline.js` holds the whole five seconds as pure maths: beats in
+milliseconds, and `introState(elapsed)` returning every number the DOM needs. It
+is unit-tested on its own. `TitleSequence.jsx` runs one `requestAnimationFrame`
+loop that writes those numbers to CSS variables on its root node — React never
+re-renders during playback, so nothing stutters behind the 4096 px artwork. The
+sequence waits for the artwork to decode before starting, plays once per session
+(`sessionStorage`), is skippable with any key or click, and collapses to a static
+title card under `prefers-reduced-motion`.
+
+`npm run intro:video` records the same sequence to a shareable file. Playwright
+captures the page, then encoding depends on what ffmpeg is around:
+
+- a full ffmpeg (`FFMPEG=/path/to/ffmpeg`, or `ffmpeg` on `PATH`) → `public/intro.mp4`
+- otherwise Playwright's bundled build, which only speaks VP8 → `public/intro.webm`
+
+The poster frame and the social card (`public/og.png`) are Playwright
+screenshots, so they never need ffmpeg at all.
 
 ## Content
 
-Everything comes from `src/content/site.js`. Each entry in `sections` is one spot: `spot` (where the camera looks, in % of the room image, plus zoom), `avatar` (where the pose stands), `pose`, `lines` (the dialogue) and `blocks` (the card: prose, list, timeline, projects). `public/resume.pdf` is the downloadable résumé — replace the file and nothing else needs to change.
+Everything comes from `src/content/site.js`. Each entry in `sections` is one spot: `spot` (where the camera looks, in % of the room image, plus zoom), `avatar` (where the pose stands), `marker` (where its hotspot sits on the object), `pose`, `lines` (the dialogue) and `blocks` (the card: prose, list, timeline, projects). Adding a section gives it a route, a numbered entry in the chapter rail, a hotspot and a slot in the scroll order. `public/resume.pdf` is the downloadable résumé — replace the file and nothing else needs to change.
 
 ## Art
 
