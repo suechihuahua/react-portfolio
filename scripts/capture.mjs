@@ -11,16 +11,16 @@ await server.listen()
 const browser = await chromium.launch()
 
 try {
-  // The social card is the home screen at link-preview size. A fresh context
-  // has no sessionStorage, so the boot runs first -- skip it with a key.
+  // The social card is the home screen at link-preview size. Every load opens
+  // on the CRT page, so dismiss it with a key first.
   const og = await browser.newPage({ viewport: { width: 1200, height: 630 } })
   await og.goto(`${base}/`)
-  // Let React hydrate before the key, then wait for the boot layer to actually
+  // Let React hydrate before the key, then wait for the CRT layer to actually
   // unmount rather than guessing at a duration.
   await og.waitForTimeout(400)
   await og.keyboard.press('Enter')
   await og
-    .waitForFunction(() => !document.querySelector('.boot-layer'), null, { timeout: 8000 })
+    .waitForFunction(() => !document.querySelector('.crt-layer'), null, { timeout: 8000 })
     .catch(() => {})
   await og.waitForTimeout(700)
   await og.screenshot({ path: 'public/og.png', type: 'png' })

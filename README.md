@@ -1,10 +1,10 @@
 # Natsuo Fujita — portfolio
 
-A console. Near-black, with a slowly drifting grid and three soft colour fields
-behind everything, monospace chrome, and a command palette on `⌘K` that
-fuzzy-searches every section, link and action. A five-second welcome runs once
-per session — click anywhere or press any key to skip it. Built with React 19,
-Vite, react-router, framer-motion and zustand.
+Every load opens on a CRT loading page; click anywhere to enter the console
+behind it. The console is near-black, with a slowly drifting grid and three soft
+colour fields, monospace chrome, and a command palette on `⌘K` that
+fuzzy-searches every section, link and action. Built with React 19, Vite,
+react-router, framer-motion and zustand.
 
 ## Develop
 
@@ -19,19 +19,30 @@ npm run screenshots  # 375/768/1440 screenshots + overflow check
 ```
 
 Add `?capture` to any URL to render the content alone, without the sidebar,
-status bar or welcome.
+status bar or loading page.
 
-## The welcome
+## The CRT loading page
 
-`src/lib/welcomeTimeline.js` holds the five seconds as pure maths: beats in
-milliseconds, and `welcomeState(elapsed)` returning every number the DOM needs.
-`Welcome.jsx` drives it from one `requestAnimationFrame` loop that writes CSS
-variables and the decrypting characters straight to the DOM, so React never
-re-renders during playback. Under `prefers-reduced-motion` it shows the settled
-card and moves on.
+A Canvas 2D screen texture composited through a raw WebGL CRT shader — no
+libraries, no framework beyond React holding the canvases.
 
-The background (`Ambient.jsx`) animates `transform` only, so it composites on
-the GPU and never repaints over the content.
+- `src/lib/bootScreen.js` — the boot animation as pure maths (`bootState`) plus
+  one Canvas 2D painter. It draws at 512×384; the shader scales that up with
+  `NEAREST` filtering, which is where the chunky phosphor look comes from.
+- `src/lib/crtRenderer.js` — the WebGL composite: barrel curvature, an
+  aperture-grille mask, scanlines, a rolling bar, chromatic aberration that
+  grows toward the edges, noise, and a vignette. Returns `null` when WebGL is
+  unavailable, and the page then shows the plain 2D canvas instead.
+- `src/lib/crtPresets.js` — the variants (**Nintendo**, Game Boy, Arcade, Amber,
+  Broadcast) and the clamping the live controls share with the shader.
+
+The **CRT** button, top right, opens the variant picker and live controls for
+CRT speed, motion, hue, saturation, brightness, opacity and boot speed. Choices
+persist in `localStorage`; the loading page itself is never remembered, so a
+refresh always lands there again.
+
+The console's own background (`Ambient.jsx`) animates `transform` only, so it
+composites on the GPU and never repaints over the content.
 
 ## How it moves
 
@@ -40,8 +51,9 @@ the GPU and never repaints over the content.
   and the external links.
 - `↑` `↓` (outside the palette) step through sections in order; so does a
   scroll or a swipe.
-- Click anywhere, or press any key, to skip the welcome.
-- Deep links and `?capture` never show the welcome, not even for a frame.
+- Click anywhere on the loading page, or press any key, to enter.
+- Only `?capture` skips the loading page; deep links show it and then land on
+  the route you asked for.
 
 ## Content
 

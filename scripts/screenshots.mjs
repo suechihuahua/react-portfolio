@@ -17,12 +17,12 @@ try {
     const page = await browser.newPage({ viewport: { width, height: width <= 768 ? 812 : 900 } })
     for (const route of ROUTES) {
       await page.goto(`http://localhost:4175${route}`)
-      // Let React hydrate, skip the boot if it is running, then wait for the
+      // Let React hydrate, dismiss the CRT loading page, then wait for the
       // layer to actually unmount rather than guessing at a duration.
       await page.waitForTimeout(400)
       await page.keyboard.press('Enter')
       await page
-        .waitForFunction(() => !document.querySelector('.boot-layer'), null, { timeout: 8000 })
+        .waitForFunction(() => !document.querySelector('.crt-layer'), null, { timeout: 8000 })
         .catch(() => {})
       await page.waitForTimeout(600)
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth)

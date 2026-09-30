@@ -4,14 +4,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { person, sections, routeOrder } from '../content/site.js'
 import { useConsoleStore, watchMediaPreferences } from '../store/useConsoleStore.js'
 import { useScrollNavigation } from '../hooks/useScrollNavigation.js'
-import Welcome from './Welcome.jsx'
+import CrtBoot from './CrtBoot.jsx'
 import Ambient from './Ambient.jsx'
 import Sidebar from './Sidebar.jsx'
 import StatusBar from './StatusBar.jsx'
 import CommandPalette from './CommandPalette.jsx'
 
-// Mounts once and persists across every route change. There is no gate to
-// click through: the welcome runs once per session and hands straight over.
+// Mounts once and persists across every route change. Every load opens on the
+// CRT loading page; a click anywhere enters the console.
 export default function Layout() {
   const location = useLocation()
   const captureMode = new URLSearchParams(location.search).has('capture')
@@ -23,9 +23,9 @@ export default function Layout() {
   const paletteOpen = useConsoleStore((s) => s.paletteOpen)
   const togglePalette = useConsoleStore((s) => s.togglePalette)
 
-  // Deep links and capture runs never show the boot, not even for a frame.
-  const deepLinked = location.pathname !== '/'
-  const booted = bootedStore || deepLinked || captureMode
+  // The loading page shows on every load, deep links included; only capture
+  // runs skip it.
+  const booted = bootedStore || captureMode
 
   useEffect(() => watchMediaPreferences(), [])
 
@@ -36,8 +36,8 @@ export default function Layout() {
   }, [location.pathname, setActiveSlug])
 
   useEffect(() => {
-    if ((deepLinked || captureMode) && !bootedStore) finishBoot()
-  }, [deepLinked, captureMode, bootedStore, finishBoot])
+    if (captureMode && !bootedStore) finishBoot()
+  }, [captureMode, bootedStore, finishBoot])
 
   useEffect(() => {
     const onKey = (e) => {
@@ -64,12 +64,12 @@ export default function Layout() {
       <AnimatePresence>
         {!booted && (
           <motion.div
-            key="welcome"
-            className="welcome-layer"
+            key="crt"
+            className="crt-layer"
             exit={{ opacity: 0 }}
-            transition={{ duration: reducedMotion ? 0 : 0.35 }}
+            transition={{ duration: reducedMotion ? 0 : 0.55 }}
           >
-            <Welcome onDone={finishBoot} />
+            <CrtBoot onEnter={finishBoot} />
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,8 +1,18 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, act } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import Layout from './Layout.jsx'
 import { useConsoleStore } from '../store/useConsoleStore.js'
+
+// The CRT page needs WebGL, which jsdom has none of; its own behaviour is
+// covered by the crtPresets and bootScreen tests.
+vi.mock('./CrtBoot.jsx', () => ({
+  default: ({ onEnter }) => (
+    <button type="button" data-testid="crt" onClick={onEnter}>
+      loading
+    </button>
+  ),
+}))
 
 function renderLayout(path = '/') {
   return render(
@@ -29,36 +39,47 @@ describe('Layout', () => {
     window.sessionStorage.clear()
   })
 
-  it('runs the welcome once, then shows the console', () => {
-    vi.useFakeTimers()
+  it('opens on the CRT loading page, with the console hidden behind it', () => {
     renderLayout()
-    expect(screen.getByRole('status', { name: /welcome/i })).toBeInTheDocument()
-    // The welcome drives itself from rAF, which the fake clock steps.
-    for (let i = 0; i < 400; i += 1) act(() => vi.advanceTimersByTime(20))
-    expect(useConsoleStore.getState().booted).toBe(true)
-    expect(window.sessionStorage.getItem('nf:booted')).toBe('true')
-    expect(screen.getByText('home content')).toBeInTheDocument()
-    vi.useRealTimers()
+    expect(screen.getByTestId('crt')).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: /sections/i })).not.toBeInTheDocument()
   })
 
-  it('skips the welcome on a key press', () => {
+  it('enters the console on a click', () => {
     renderLayout()
-    fireEvent.keyDown(window, { key: 'Enter' })
+    fireEvent.click(screen.getByTestId('crt'))
     expect(useConsoleStore.getState().booted).toBe(true)
     expect(screen.getByText('home content')).toBeInTheDocument()
   })
 
-  it('ignores Tab so the welcome does not swallow keyboard focus', () => {
-    renderLayout()
-    fireEvent.keyDown(window, { key: 'Tab' })
-    expect(useConsoleStore.getState().booted).toBe(false)
-  })
-
-  it('lands straight in the content on a deep link, with no gate', () => {
+  it('shows the loading page on a deep link too, then lands on that route', () => {
     renderLayout('/about')
-    expect(screen.queryByRole('status', { name: /welcome/i })).not.toBeInTheDocument()
+    expect(screen.getByTestId('crt')).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('crt'))
     expect(screen.getByText('about content')).toBeInTheDocument()
     expect(useConsoleStore.getState().activeSlug).toBe('about')
+  })
+
+  it('remembers nothing between loads, so a fresh store shows it again', () => {
+    // A refresh is a fresh store: `booted` is not persisted anywhere.
+    renderLayout()
+    fireEvent.click(screen.getByTestId('crt'))
+    expect(window.sessionStorage.getItem('nf:booted')).toBeNull()
+    expect(useConsoleStore.getInitialState().booted).toBe(false)
+  })
+
+  it('skips the loading page for capture runs', () => {
+    render(
+      <MemoryRouter initialEntries={['/?capture']}>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route index element={<p>home content</p>} />
+          </Route>
+        </Routes>
+      </MemoryRouter>,
+    )
+    expect(screen.queryByTestId('crt')).not.toBeInTheDocument()
+    expect(screen.getByText('home content')).toBeInTheDocument()
   })
 
   it('opens and closes the command palette with the keyboard shortcut', () => {
@@ -71,14 +92,14 @@ describe('Layout', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
   })
 
-  it('shows the sidebar and status bar once booted', () => {
+  it('shows the sidebar and status bar once entered', () => {
     useConsoleStore.setState({ booted: true })
     renderLayout()
     expect(screen.getByRole('navigation', { name: /sections/i })).toBeInTheDocument()
     expect(screen.getByRole('contentinfo')).toBeInTheDocument()
   })
 
-  it('steps to the first section on a wheel once booted', () => {
+  it('steps to the first section on a wheel once entered', () => {
     useConsoleStore.setState({ booted: true })
     renderLayout()
     fireEvent.wheel(screen.getByRole('main'), { deltaY: 120 })
